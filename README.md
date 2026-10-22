@@ -1,26 +1,57 @@
-# QubitGuard
+# QubitGuard Quantum Lab (Qiskit)
 
-QubitGuard es una base de proyecto organizada para una aplicación de seguridad, validación y automatización.
+Este módulo ejecuta circuitos reales de Qiskit en `qiskit-aer` local. No se limita a dibujar circuitos ni afirma ejecutar en hardware físico.
 
-## Estructura
+## Requisitos
 
-- `src/qubitguard/`: código fuente del paquete principal.
-- `tests/`: pruebas automatizadas.
-- `docs/`: documentación técnica.
-- `examples/`: ejemplos de uso.
-- `pyproject.toml`: configuración del proyecto.
-- `.gitignore`: archivos y carpetas ignoradas.
+- Python 3.11 recomendado.
+- pip y un entorno virtual.
 
-## Inicio rápido
+## Instalación
+
+Desde la carpeta `backend/`:
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# o .venv\Scripts\activate  # Windows
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# macOS/Linux:
+source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-pytest
 ```
 
-## Objetivo
+## Ejecutar la API
 
-Esta plantilla sirve como punto de partida para construir una herramienta de protección, análisis y validación de datos con una estructura clara y mantenible.
+```bash
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Documentación interactiva: http://127.0.0.1:8000/docs
+
+## Probar endpoints
+
+Hadamard:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/quantum/hadamard-demo -H "Content-Type: application/json" -d '{"shots":1024,"seed":42}'
+```
+
+Grover (espacio de ocho estados, objetivo ficticio `101`):
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/quantum/grover-demo -H "Content-Type: application/json" -d '{"n_qubits":3,"marked_state":"101","shots":2048,"seed":42}'
+```
+
+## Ejecutar pruebas
+
+```bash
+pytest -q
+```
+
+## Notas científicas
+
+- Hadamard sobre `|0>` produce idealmente probabilidades teóricas 50/50 antes de medir; los recuentos observados fluctúan por muestreo.
+- Grover utiliza un oráculo que marca una cadena binaria sintética y un difusor. El espacio está limitado a 4 qubits para que las simulaciones sigan siendo pequeñas.
+- El número de consultas al oráculo no es equivalente directamente a tiempo real de ataque ni demuestra que se puedan recuperar contraseñas reales.
+- Los resultados se obtienen con un simulador de software, sin ruido físico ni hardware cuántico real.

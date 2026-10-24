@@ -1,15 +1,22 @@
-"""Contenido educativo: criptografía poscuántica y limitaciones (fase 3)."""
+"""Contenido educativo: criptografía poscuántica y limitaciones. Se lee una vez al importar."""
 
-from fastapi import APIRouter, HTTPException
+import json
+from pathlib import Path
+
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/api/learn", tags=["Learn"])
+
+_CONTENT = Path(__file__).resolve().parent.parent / "content"
+_PQC = json.loads((_CONTENT / "pqc.json").read_text(encoding="utf-8"))
+_LIMITATIONS = json.loads((_CONTENT / "limitations.json").read_text(encoding="utf-8"))
 
 
 @router.get("/pqc")
 def pqc():
-    raise HTTPException(status_code=501, detail="Pendiente de implementar (fase 3).")
+    return _PQC
 
 
 @router.get("/limitations")
 def limitations():
-    raise HTTPException(status_code=501, detail="Pendiente de implementar (fase 3).")
+    return _LIMITATIONS

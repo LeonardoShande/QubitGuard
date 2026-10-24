@@ -1,0 +1,44 @@
+{"cards": [
+ {"id": "grover-aes", "title": "Grover frente a AES: la clave se acorta a la mitad, no desaparece", "threat": "Grover",
+  "targets": ["AES-128", "AES-256"],
+  "summary": "El algoritmo de Grover (1996) busca una clave entre N = 2^n posibilidades en unas pi/4 * raíz(N) iteraciónes en lugar de ~N/2 intentos. Idealizado, una clave de n bits ofrece unos n/2 bits de seguridad efectiva: AES-128 quedaría en ~64 bits y AES-256 en ~128 bits.",
+  "impact": "AES-256 sigue siendo cómodo incluso con esa reducción idealizada (~2^128). AES-128 queda más justo en teoria, pero el costo real es mucho mayor que el de la cuenta ideal: las iteraciónes de Grover son secuenciales (paralelizar reparte mal el trabajo: con P máquinas el ahorro es solo ~raíz(P)), cada iteración exige evaluar AES como circuito reversible y, con corrección de errores, cada puerta lógica cuesta muchisimos qubits físicos. Hoy no existe un ataque cuántico práctico a AES.",
+  "mitigation": "Usar AES-256 donde se quiera margen largo plazo y mantener AES-128 solo si el modelo de riesgo lo permite. No hace falta abandonar AES: la criptografía simétrica solo necesita claves mayores.",
+  "sources": [
+   {"label": "Grover (1996), A fast quantum mechanical algorithm for database search (arXiv:quant-ph/9605043)", "url": "https://arxiv.org/abs/quant-ph/9605043"},
+   {"label": "NIST, Post-Quantum Cryptography project", "url": "https://csrc.nist.gov/projects/post-quantum-cryptography"}]},
+ {"id": "shor-rsa-ecc", "title": "Shor frente a RSA y curvas elípticas: aquí sí hay rotura", "threat": "Shor",
+  "targets": ["RSA", "ECC", "Diffie-Hellman"],
+  "summary": "El algoritmo de Shor (1994, version públicada en 1997) factoriza enteros y resuelve logaritmos discretos en tiempo polinómico en un computador cuántico tolerante a fallos. Eso cubre la dificultad en la que se apoyan RSA, Diffie-Hellman y ECC.",
+  "impact": "A diferencia de Grover, el ataque no es 'raíz cuadrada': deja de ser exponencial. Lo que falta es hardware: las estimaciónes públicas de recursos son enormes. Gidney y Ekerå (2021) estimaron factorizar RSA-2048 en ~8 horas con ~20 millones de qubits ruidosos; Gidney (2025) lo rebajó a menos de un millon de qubits ruidosos en menos de una semana. Son estimaciónes bajo supuestos concretos de ruido y corrección de errores, no máquinas existentes.",
+  "mitigation": "Migrar a criptografía poscuántica estándarizada (ML-KEM para intercambio de claves, ML-DSA o SLH-DSA para firmas) y planificar la agilidad criptográfica: poder cambiar de algoritmo sin rehacer el sistema.",
+  "sources": [
+   {"label": "Shor (1997), Polynomial-Time Algorithms for Prime Factorization and Discrete Logarithms on a Quantum Computer (arXiv:quant-ph/9508027)", "url": "https://arxiv.org/abs/quant-ph/9508027"},
+   {"label": "Gidney y Ekerå (2021), How to factor 2048 bit RSA integers in 8 hours using 20 million noisy qubits", "url": "https://arxiv.org/abs/1905.09749"},
+   {"label": "Gidney (2025), How to factor 2048 bit RSA integers with less than a million noisy qubits", "url": "https://arxiv.org/abs/2505.15917"}]},
+ {"id": "nist-pqc", "title": "Estándares NIST de criptografía poscuántica (agosto 2024)", "threat": "Shor",
+  "targets": ["ML-KEM (FIPS 203)", "ML-DSA (FIPS 204)", "SLH-DSA (FIPS 205)"],
+  "summary": "En agosto de 2024 NIST publicó sus tres primeros estándares poscuánticos finales: FIPS 203 (ML-KEM, encapsulado de claves basado en retículos, derivado de CRYSTALS-Kyber), FIPS 204 (ML-DSA, firmás basadas en retículos, derivado de CRYSTALS-Dilithium) y FIPS 205 (SLH-DSA, firmás basadas en hash, derivado de SPHINCS+).",
+  "impact": "Son algoritmos clasicos (corren en computadores normales) cuya seguridad se apoya en problemás para los que no se conoce un ataque cuántico eficiente. Reemplazan a RSA/ECC en intercambio de claves y firmas. Que no se conozca un ataque no es una demostración: por eso SLH-DSA, de base distinta (solo hashes), es un respaldo conservador.",
+  "mitigation": "Inventariar dónde se usa RSA/ECC, probar ML-KEM y ML-DSA (muchas bibliotecas TLS ya los ofrecen, a menudo en modo híbrido con ECC) y definir un plan de migración.",
+  "sources": [
+   {"label": "NIST FIPS 203, ML-KEM", "url": "https://csrc.nist.gov/pubs/fips/203/final"},
+   {"label": "NIST FIPS 204, ML-DSA", "url": "https://csrc.nist.gov/pubs/fips/204/final"},
+   {"label": "NIST FIPS 205, SLH-DSA", "url": "https://csrc.nist.gov/pubs/fips/205/final"}]},
+ {"id": "hndl", "title": "Harvest now, decrypt later: guardar hoy, descifrar mañana", "threat": "Shor",
+  "targets": ["Trafico cifrado con RSA/ECC", "Datos de larga vida"],
+  "summary": "Un adversario puede copiar hoy comúnicaciones cifradas con claves públicas (RSA, ECC) y guardarlas hasta disponer de un computador cuántico capaz de ejecutar Shor.",
+  "impact": "El riesgo depende de cuánto tiempo deban seguir siendo secretos los datos. Historiales médicos, secretos de estado o propiedad intelectual con vida de 20 o más años ya estan expuestos en la práctica al intercambio de claves actual, aunque la máquina cuántica aún no exista.",
+  "mitigation": "Para datos de larga vida, adoptar cuanto antes intercambio de claves poscuántico (ML-KEM, normalmente híbrido con ECC). La cifra simétrica del contenido (AES-256) no es el eslabon debil: lo es el intercambio de claves.",
+  "sources": [
+   {"label": "NIST, Post-Quantum Cryptography project", "url": "https://csrc.nist.gov/projects/post-quantum-cryptography"},
+   {"label": "NIST FIPS 203, ML-KEM", "url": "https://csrc.nist.gov/pubs/fips/203/final"}]},
+ {"id": "grover-hash-passwords", "title": "Hashes y contraseñas: Grover recorta, el KDF y la longitud mandan", "threat": "Grover",
+  "targets": ["Hashes (SHA-256)", "Contraseñas"],
+  "summary": "Para invertir un hash de n bits por fuerza bruta, Grover reduce la búsqueda de preimagen a ~2^(n/2) evaluaciónes frente a ~2^n clasicas. La resistencia a colisiones se ve afectada mucho menos.",
+  "impact": "Una contraseña corta o predecible cae por diccionario clasico mucho antes de que importe Grover: el eslabon debil es la entropía de la contraseña, no el computador cuántico. Y un KDF lento multiplica el costo de cada intento, también el de cada iteración de Grover, porque el oráculo debe calcular el KDF completo.",
+  "mitigation": "Contraseñas largas (frases de paso únicas), un KDF lento y con uso intensivo de memoria como Argon2 (RFC 9106) y autenticacion multifactor (MFA). Nada de esto exige hardware cuántico.",
+  "sources": [
+   {"label": "Grover (1996), arXiv:quant-ph/9605043", "url": "https://arxiv.org/abs/quant-ph/9605043"},
+   {"label": "RFC 9106, Argon2 memory-hard function", "url": "https://www.rfc-editor.org/rfc/rfc9106"}]}
+]}

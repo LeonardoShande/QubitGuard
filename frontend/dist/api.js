@@ -30,20 +30,37 @@ async function request(path, body) {
     }
     return (await res.json());
 }
+// Caché en memoria por sesión para respuestas deterministas. Guarda la promesa, así que dos
+// llamadas simultáneas comparten una sola petición; si falla se borra para poder reintentar.
+const memo = new Map();
+function cached(key, load) {
+    let hit = memo.get(key);
+    if (!hit) {
+        hit = load();
+        memo.set(key, hit);
+        hit.catch(() => memo.delete(key));
+    }
+    return hit;
+}
 export const api = {
     grover: (body) => request("/api/quantum/grover", body),
-    groverCurve: (n_qubits) => request("/api/quantum/grover-curve", { n_qubits }),
+    groverCurve: (n_qubits) => cached(`curve:${n_qubits}`, () => request("/api/quantum/grover-curve", { n_qubits })),
     monteCarlo: (n_bits, trials) => request("/api/quantum/montecarlo", { n_bits, trials, seed: null }),
-    compare: (maxBits) => request(`/api/quantum/compare?max_bits=${maxBits}`),
-    pqc: () => request("/api/learn/pqc"),
-    limitations: () => request("/api/learn/limitations"),
-    daily: () => request("/api/challenge/daily"),
+    compare: (maxBits) => {
+        const path = `/api/quantum/compare?max_bits=${maxBits}`;
+        return cached(path, () => request(path));
+    },
+    pqc: () => cached("/api/learn/pqc", () => request("/api/learn/pqc")),
+    limitations: () => cached("/api/learn/limitations", () => request("/api/learn/limitations")),
+    daily: () => cached("/api/challenge/daily", () => request("/api/challenge/daily")),
 };
 /** Mensaje para el usuario según el tipo de fallo. */
 export function describeError(err) {
     if (err instanceof ApiError) {
         if (err.status === 0)
             return err.message + " Comprueba que el backend esté en marcha.";
+        if (err.status === 503)
+            return "El simulador está ocupado con otra ejecución. Espera un par de segundos y reintenta.";
         if (err.status === 501)
             return "Este módulo todavía se está preparando en el servidor. Prueba de nuevo en unos minutos.";
         if (err.status === 422)

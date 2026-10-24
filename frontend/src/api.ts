@@ -106,21 +106,40 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
+// Caché en memoria por sesión para respuestas deterministas. Guarda la promesa, así que dos
+// llamadas simultáneas comparten una sola petición; si falla se borra para poder reintentar.
+const memo = new Map<string, Promise<unknown>>();
+
+function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+  let hit = memo.get(key) as Promise<T> | undefined;
+  if (!hit) {
+    hit = load();
+    memo.set(key, hit);
+    hit.catch(() => memo.delete(key));
+  }
+  return hit;
+}
+
 export const api = {
   grover: (body: GroverRequest) => request<GroverResult>("/api/quantum/grover", body),
-  groverCurve: (n_qubits: number) => request<GroverCurve>("/api/quantum/grover-curve", { n_qubits }),
+  groverCurve: (n_qubits: number) =>
+    cached(`curve:${n_qubits}`, () => request<GroverCurve>("/api/quantum/grover-curve", { n_qubits })),
   monteCarlo: (n_bits: number, trials: number) =>
     request<MonteCarloResult>("/api/quantum/montecarlo", { n_bits, trials, seed: null }),
-  compare: (maxBits: number) => request<{ rows: CompareRow[] }>(`/api/quantum/compare?max_bits=${maxBits}`),
-  pqc: () => request<{ cards: PqcCard[] }>("/api/learn/pqc"),
-  limitations: () => request<{ items: Limitation[] }>("/api/learn/limitations"),
-  daily: () => request<DailyChallenge>("/api/challenge/daily"),
+  compare: (maxBits: number) => {
+    const path = `/api/quantum/compare?max_bits=${maxBits}`;
+    return cached(path, () => request<{ rows: CompareRow[] }>(path));
+  },
+  pqc: () => cached("/api/learn/pqc", () => request<{ cards: PqcCard[] }>("/api/learn/pqc")),
+  limitations: () => cached("/api/learn/limitations", () => request<{ items: Limitation[] }>("/api/learn/limitations")),
+  daily: () => cached("/api/challenge/daily", () => request<DailyChallenge>("/api/challenge/daily")),
 };
 
 /** Mensaje para el usuario según el tipo de fallo. */
 export function describeError(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.status === 0) return err.message + " Comprueba que el backend esté en marcha.";
+    if (err.status === 503) return "El simulador está ocupado con otra ejecución. Espera un par de segundos y reintenta.";
     if (err.status === 501) return "Este módulo todavía se está preparando en el servidor. Prueba de nuevo en unos minutos.";
     if (err.status === 422) return `Revisa los valores: ${err.message || "el servidor los rechazó."}`;
     return `El servidor respondió con un error ${err.status}${err.message ? `: ${err.message}` : "."}`;

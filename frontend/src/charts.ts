@@ -40,8 +40,17 @@ export function mount(host: HTMLElement, draw: Draw): void {
   paint(host, draw, Math.max(280, Math.floor(host.clientWidth)));
 }
 
-function svgRoot(width: number, height: number, label: string): SVGSVGElement {
-  const svg = el("svg", { width, height, viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": label });
+let uid = 0;
+
+/** Raíz accesible: <title> corto y <desc> con el resumen de los datos, enlazados por id. */
+function svgRoot(width: number, height: number, title: string, desc: string): SVGSVGElement {
+  const id = `chart-${++uid}`;
+  const svg = el("svg", {
+    width, height, viewBox: `0 0 ${width} ${height}`, role: "img",
+    "aria-labelledby": `${id}-t`, "aria-describedby": `${id}-d`,
+  });
+  el("title", { id: `${id}-t` }, svg).textContent = title;
+  el("desc", { id: `${id}-d` }, svg).textContent = desc;
   return svg;
 }
 
@@ -61,6 +70,9 @@ export interface RefLine { at: number; label: string; cls: string }
 export interface BarOptions {
   values: number[];
   labels: string[];
+  /** Título corto del gráfico (<title>). */
+  title: string;
+  /** Resumen de los datos (<desc>). */
   label: string;
   highlight?: number;
   /** Líneas verticales en unidades de índice de barra (0 = borde izquierdo de la primera). */
@@ -73,7 +85,7 @@ export interface BarOptions {
 export function barChart(o: BarOptions): Draw {
   return (width) => {
     const height = o.height ?? 240;
-    const svg = svgRoot(width, height, o.label);
+    const svg = svgRoot(width, height, o.title, o.label);
     const w = width - PAD.left - PAD.right;
     const h = height - PAD.top - PAD.bottom;
     const max = Math.max(1, ...o.values);
@@ -129,6 +141,7 @@ export interface Series { ys: number[]; cls: string; name: string }
 export interface LineOptions {
   xs: number[];
   series: Series[];
+  title: string;
   label: string;
   xTitle: string;
   /** Si es true, los ys son log10 y el eje muestra potencias de 10. */
@@ -145,7 +158,7 @@ const pow10Label = (k: number) => (k === 0 ? "1" : k === 1 ? "10" : `10${String(
 export function lineChart(o: LineOptions): Draw {
   return (width) => {
     const height = o.height ?? 240;
-    const svg = svgRoot(width, height, o.label);
+    const svg = svgRoot(width, height, o.title, o.label);
     const w = width - PAD.left - PAD.right;
     const h = height - PAD.top - PAD.bottom;
     const g = el("g", { transform: `translate(${PAD.left},${PAD.top})` }, svg);

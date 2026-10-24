@@ -32,8 +32,16 @@ export function mount(host, draw) {
     observer.observe(host);
     paint(host, draw, Math.max(280, Math.floor(host.clientWidth)));
 }
-function svgRoot(width, height, label) {
-    const svg = el("svg", { width, height, viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": label });
+let uid = 0;
+/** Raíz accesible: <title> corto y <desc> con el resumen de los datos, enlazados por id. */
+function svgRoot(width, height, title, desc) {
+    const id = `chart-${++uid}`;
+    const svg = el("svg", {
+        width, height, viewBox: `0 0 ${width} ${height}`, role: "img",
+        "aria-labelledby": `${id}-t`, "aria-describedby": `${id}-d`,
+    });
+    el("title", { id: `${id}-t` }, svg).textContent = title;
+    el("desc", { id: `${id}-d` }, svg).textContent = desc;
     return svg;
 }
 function niceTicks(max, count = 4) {
@@ -49,7 +57,7 @@ const PAD = { top: 16, right: 12, bottom: 40, left: 48 };
 export function barChart(o) {
     return (width) => {
         const height = o.height ?? 240;
-        const svg = svgRoot(width, height, o.label);
+        const svg = svgRoot(width, height, o.title, o.label);
         const w = width - PAD.left - PAD.right;
         const h = height - PAD.top - PAD.bottom;
         const max = Math.max(1, ...o.values);
@@ -102,7 +110,7 @@ const pow10Label = (k) => (k === 0 ? "1" : k === 1 ? "10" : `10${String(k).repla
 export function lineChart(o) {
     return (width) => {
         const height = o.height ?? 240;
-        const svg = svgRoot(width, height, o.label);
+        const svg = svgRoot(width, height, o.title, o.label);
         const w = width - PAD.left - PAD.right;
         const h = height - PAD.top - PAD.bottom;
         const g = el("g", { transform: `translate(${PAD.left},${PAD.top})` }, svg);

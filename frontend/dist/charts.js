@@ -23,14 +23,22 @@ const observer = new ResizeObserver((entries) => {
     }
 });
 function paint(host, draw, width) {
+    // El flag lo deja mount(): marca una generación nueva de datos, que entra animada
+    // (`.is-entering`); los repintados por cambio de ancho llegan ya quietos.
+    const entering = host.dataset.animate === "1";
+    delete host.dataset.animate;
     host.dataset.width = String(width);
-    host.replaceChildren(draw(width));
+    const svg = draw(width);
+    if (entering)
+        svg.classList.add("is-entering");
+    host.replaceChildren(svg);
 }
 /** Retira también el redibujado pendiente al pasar a un estado vacío. */
 export function unmount(host) {
     observer.unobserve(host);
     draws.delete(host);
     host.removeAttribute("data-width");
+    host.removeAttribute("data-animate");
     host.replaceChildren();
 }
 /** Dibuja en `host` y vuelve a dibujar cuando cambia su ancho. */
@@ -38,6 +46,7 @@ export function mount(host, draw) {
     if (!draws.has(host))
         observer.observe(host);
     draws.set(host, draw);
+    host.dataset.animate = "1";
     // Ancho real del contenedor: un mínimo fijo desbordaba a 320 px (WCAG 1.4.10).
     paint(host, draw, Math.floor(host.clientWidth) || 240);
 }
@@ -90,6 +99,8 @@ export function barChart(o) {
             const rect = el("rect", {
                 x: i * slot + gap / 2, y: h - bh, width: Math.max(1, slot - gap), height: Math.max(0, bh),
                 class: i === o.highlight ? "bar bar--hi" : "bar",
+                // --i alimenta el escalonado de la animación de aparición (styles.css).
+                style: `--i:${i}`,
             }, bars);
             const title = el("title", {}, rect);
             title.textContent = `${o.labels[i]}: ${fmt(v)}`;
@@ -169,12 +180,14 @@ export function lineChart(o) {
         }
         for (const s of o.series) {
             const d = s.ys.map((y, i) => `${i ? "L" : "M"}${sx(o.xs[i]).toFixed(1)},${sy(y).toFixed(1)}`).join("");
-            el("path", { d, class: `line ${s.cls}` }, g);
+            // pathLength=1 permite dibujar el trazo con stroke-dashoffset en la animación de entrada.
+            el("path", { d, class: `line ${s.cls}`, pathLength: 1 }, g);
             s.ys.forEach((y, i) => {
                 const x = o.xs[i];
                 const dot = el("circle", {
                     cx: sx(x), cy: sy(y), r: x === o.highlightX ? 5.5 : 3,
                     class: x === o.highlightX ? `dot ${s.cls} dot--hi` : `dot ${s.cls}`,
+                    style: `--i:${i}`,
                 }, g);
                 const title = el("title", {}, dot);
                 title.textContent = `${s.name}, ${x}: ${o.log10 ? `10^${y.toFixed(1)}` : tickLabel(y)}`;

@@ -509,8 +509,6 @@ function renderResult(r: GroverResult): void {
     label: `El estado marcado ${r.marked_state} aparece ${values[hi]} veces de ${r.shots}; el resto de los ${labels.length - 1} estados se reparte ${r.shots - (values[hi] ?? 0)}.`,
     xTitle: "Estado medido",
   }));
-  const bars = host.querySelector(".bars");
-  if (bars) motion(bars, [{ opacity: 0 }, { opacity: 1 }], 240);
   const sorted = labels.map((l, i) => [l, values[i]!] as const).sort((a, b) => b[1] - a[1]);
   fillTable("lab-hist-table", sorted.map(([l, v]) => [l === r.marked_state ? `${l} (marcado)` : l, v.toLocaleString("es-PE"), pct(v / r.shots)]));
   $("lab-hist-data").hidden = false;
@@ -674,8 +672,6 @@ function initMonteCarlo(): void {
         svg.querySelector(".bars")?.classList.add("bars--mc");
         return svg;
       });
-      const bars = host.querySelector(".bars");
-      if (bars) motion(bars, [{ opacity: 0 }, { opacity: 1 }], 240);
       fillTable("mc-table", bins.map((b, i) => [width === 1 ? String(b) : `${b}–${b + width - 1}`, (counts[i] ?? 0).toLocaleString("es-PE")]));
       $("mc-data").hidden = false;
       $("mc-mean").textContent = fmtBig(r.mean_attempts);

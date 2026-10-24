@@ -61,15 +61,43 @@ legend { padding: 0; }
 .skip:focus { top: 8px; }
 .skip:hover { color: #031014; }
 
-/* ASCII global: una textura local movida por el compositor, sin dibujar por frame. */
+/* ASCII global: tres capas movidas por el compositor, sin dibujar por frame.
+   1) textura SVG que deriva despacio, 2) halos de color para dar profundidad,
+   3) lluvia ASCII cuántica (columnas estáticas animadas con transform; el JS de ambience.ts
+   solo re-siembra glifos cada 900 ms). Todo queda tras el contenido (z-index -1), opaco en paneles. */
 .quantum-backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
 .quantum-backdrop__matrix {
-  position: absolute; inset: -80px; opacity: 0.17;
+  position: absolute; inset: -80px; opacity: 0.09;
   background: url("assets/quantum-ascii.svg") repeat center / 720px 440px;
-  animation: quantum-drift 32s cubic-bezier(0.77, 0, 0.175, 1) infinite alternate paused;
+  animation: quantum-drift 46s cubic-bezier(0.77, 0, 0.175, 1) infinite alternate paused;
 }
 .quantum-backdrop.is-animated .quantum-backdrop__matrix { animation-play-state: running; }
 @keyframes quantum-drift { to { transform: translate3d(48px, -48px, 0); } }
+.quantum-backdrop__glow {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 85% at 50% -12%, rgba(70, 217, 232, 0.07), transparent 55%),
+    radial-gradient(75% 60% at 88% 112%, rgba(234, 107, 189, 0.05), transparent 62%);
+}
+.quantum-backdrop__rain {
+  position: absolute; inset: 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14%, #000 82%, transparent);
+  mask-image: linear-gradient(180deg, transparent 0, #000 14%, #000 82%, transparent);
+}
+.rain__col {
+  position: absolute; top: 0; color: var(--cyan); opacity: 0.15;
+  font: 500 13px/2 var(--mono); letter-spacing: 0.08em; white-space: pre;
+  text-shadow: 0 0 7px rgba(70, 217, 232, 0.4); will-change: transform;
+  animation: rain-fall 18s linear infinite paused;
+}
+.rain__col--alt { color: var(--magenta); opacity: 0.11; text-shadow: 0 0 7px rgba(234, 107, 189, 0.35); }
+.quantum-backdrop.is-animated .rain__col { animation-play-state: running; }
+@keyframes rain-fall { from { transform: translate3d(0, -100%, 0); } to { transform: translate3d(0, 100vh, 0); } }
+/* Viñeta: oscurece los bordes de la textura para que el texto sobre fondo directo siga legible. */
+.quantum-backdrop::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(130% 105% at 50% 38%, transparent 42%, rgba(3, 6, 11, 0.6) 100%);
+}
 .ascii-toggle {
   margin-left: auto; min-height: 36px; padding: 0.35rem 0.6rem;
   border: 1px solid var(--edge); border-radius: 4px; background: var(--panel); color: var(--text);
@@ -79,21 +107,39 @@ legend { padding: 0; }
 .ascii-toggle[aria-pressed="false"] span { color: var(--muted); }
 .ibm-intro { display: none; }
 .ibm-intro__content { text-align: center; padding: 1.5rem; }
-.ibm-intro__letters { margin: 0; color: var(--text); font: 600 clamp(0.65rem, 2.7vw, 1.75rem)/1.35 var(--mono); }
+/* La entrada IBM "se forma" (ambience.ts): cada glifo en superposición (cian) colapsa al
+   carácter final; las filas alternas quedan más tenues como las franjas de la marca. */
+.ibm-intro__letters { position: relative; margin: 0; overflow: hidden; color: var(--text); font: 700 clamp(0.62rem, 3.2vw, 2rem)/1.35 var(--mono); }
+.intro__ch { color: var(--cyan); }
+.intro__ch.is-set { color: var(--text); animation: ch-lock 180ms var(--ease); }
+.intro__row--alt .intro__ch.is-set { color: var(--muted); }
+@keyframes ch-lock { from { color: #eafcff; } 60% { color: #eafcff; } }
+/* Un solo barrido de luz sobre las letras ya formadas, como el ascii-sheen del portfolio. */
+.ibm-intro__letters::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -32%; width: 22%;
+  background: linear-gradient(105deg, transparent, rgba(220, 245, 255, 0.13), transparent);
+  transform: skewX(-12deg); opacity: 0; pointer-events: none;
+}
 .ibm-intro__qiskit { color: var(--cyan); margin-block: 1.5rem 0.65rem; font-size: clamp(0.875rem, 2vw, 1.1rem); }
 .ibm-intro__content > p:last-child { color: var(--muted); font-size: 0.75rem; }
 body:focus-within .ibm-intro { display: none; }
 @media (prefers-reduced-motion: no-preference) {
-  .ibm-intro { display: grid; place-items: center; position: fixed; inset: 0; z-index: 45; background: var(--bg); pointer-events: none; animation: ibm-intro 2200ms var(--ease) both; }
-  .ibm-intro__letters { animation: ibm-letters 2200ms var(--ease) both; }
+  .ibm-intro { display: grid; place-items: center; position: fixed; inset: 0; z-index: 45; background: var(--bg); pointer-events: none; animation: ibm-intro 2900ms var(--ease) both; }
+  .ibm-intro__letters { animation: ibm-letters 300ms var(--ease) both; }
+  .ibm-intro__letters::after { animation: intro-sheen 900ms ease-in-out 1800ms both; }
 }
 @keyframes ibm-letters {
   0% { opacity: 0; transform: translateY(8px); }
   24%, 100% { opacity: 1; transform: none; }
 }
 @keyframes ibm-intro {
-  0%, 66% { opacity: 1; visibility: visible; }
+  0%, 72% { opacity: 1; visibility: visible; }
   100% { opacity: 0; visibility: hidden; }
+}
+@keyframes intro-sheen {
+  0% { opacity: 0; transform: translateX(0) skewX(-12deg); }
+  18%, 82% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(560%) skewX(-12deg); }
 }
 
 .wrap { width: 100%; max-width: 1240px; margin-inline: auto; padding-inline: 20px; }
@@ -153,8 +199,11 @@ body:focus-within .ibm-intro { display: none; }
 @media (prefers-reduced-motion: no-preference) {
   .hero__copy { animation: arrive 500ms var(--ease) both; }
   .race { animation: arrive 500ms 80ms var(--ease) both; }
+  /* El titular entra con un barrido, el gesto del nombre ASCII del portfolio. */
+  .hero h1 { animation: wipe-in 700ms var(--ease) 60ms both; }
 }
 @keyframes arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes wipe-in { from { clip-path: inset(-0.15em 100% -0.15em 0); } to { clip-path: inset(-0.15em -0.15em -0.15em 0); } }
 
 .race {
   position: relative; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line-2); border-radius: 12px;
@@ -343,6 +392,48 @@ select.input { appearance: auto; }
 .line.s-classic { stroke: var(--magenta); }
 .dot.s-classic { fill: var(--magenta); }
 .dot--hi { stroke: var(--text); stroke-width: 2; }
+
+/* Entrada de los gráficos: solo la generación nueva de datos (svg.is-entering, marcado por
+   charts.ts en mount) se anima; los repintados por cambio de ancho llegan quietos.
+   Barras: crecen desde su base con escalonado; la resaltada pasa ligeramente de largo.
+   Líneas: el trazo se dibuja (pathLength=1 + dashoffset); los puntos estallan después. */
+.chart svg.is-entering .bar {
+  transform-box: fill-box; transform-origin: bottom;
+  animation: bar-rise 520ms var(--ease) both;
+  animation-delay: calc(min(var(--i, 0) * 14ms, 680ms));
+}
+.chart svg.is-entering .bar--hi { animation-name: bar-rise-hi; }
+@keyframes bar-rise { from { transform: scaleY(0.02); opacity: 0.35; } }
+@keyframes bar-rise-hi {
+  0% { transform: scaleY(0.02); opacity: 0.35; }
+  70% { opacity: 1; }
+  85% { transform: scaleY(1.03); }
+  100% { transform: scaleY(1); }
+}
+.chart svg.is-entering .line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: line-draw 760ms var(--ease) both; }
+@keyframes line-draw { to { stroke-dashoffset: 0; } }
+.chart svg.is-entering .dot {
+  transform-box: fill-box; transform-origin: center;
+  animation: dot-pop 300ms var(--ease) both;
+  animation-delay: calc(300ms + min(var(--i, 0) * 20ms, 480ms));
+}
+@keyframes dot-pop { from { transform: scale(0); } }
+.chart svg.is-entering .grid,
+.chart svg.is-entering .tick,
+.chart svg.is-entering .axis,
+.chart svg.is-entering .axis-title { animation: chart-fade 420ms var(--ease) both; }
+@keyframes chart-fade { from { opacity: 0; } }
+.chart svg.is-entering .ref { transform-box: fill-box; transform-origin: top; animation: ref-drop 480ms var(--ease) 140ms both; }
+@keyframes ref-drop { from { transform: scaleY(0); } }
+/* Línea de escaneo que recorre el gráfico mientras aparece: "midiendo". */
+.chart:has(> svg.is-entering) { position: relative; }
+.chart:has(> svg.is-entering)::after {
+  content: ""; position: absolute; left: 0; right: 0; top: -6px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0; pointer-events: none;
+  animation: chart-scan 620ms ease-out 80ms both;
+}
+@keyframes chart-scan { 0% { opacity: 0.7; transform: translateY(0); } 100% { opacity: 0; transform: translateY(190px); } }
 
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; margin-top: 0.75rem; font-size: 0.8rem; color: var(--muted); }
 .legend b { color: var(--text); margin-right: 0.75rem; }
@@ -569,6 +660,7 @@ select.input { appearance: auto; }
 
 @media (prefers-reduced-motion: reduce) {
   .quantum-backdrop__matrix { animation: none; }
+  .rain__col { animation: none; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
   .btn.is-busy::before { animation: none; border-right-color: currentColor; opacity: 0.6; }

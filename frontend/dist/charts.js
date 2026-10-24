@@ -28,9 +28,11 @@ function paint(host, draw, width) {
 }
 /** Dibuja en `host` y vuelve a dibujar cuando cambia su ancho. */
 export function mount(host, draw) {
+    if (!draws.has(host))
+        observer.observe(host);
     draws.set(host, draw);
-    observer.observe(host);
-    paint(host, draw, Math.max(280, Math.floor(host.clientWidth)));
+    // Ancho real del contenedor: un mínimo fijo desbordaba a 320 px (WCAG 1.4.10).
+    paint(host, draw, Math.floor(host.clientWidth) || 240);
 }
 let uid = 0;
 /** Raíz accesible: <title> corto y <desc> con el resumen de los datos, enlazados por id. */
@@ -58,11 +60,13 @@ export function barChart(o) {
     return (width) => {
         const height = o.height ?? 240;
         const svg = svgRoot(width, height, o.title, o.label);
+        if (!o.values.length)
+            return svg;
         const w = width - PAD.left - PAD.right;
         const h = height - PAD.top - PAD.bottom;
         const max = Math.max(1, ...o.values);
         const ticks = niceTicks(max);
-        const top = ticks[ticks.length - 1];
+        const top = ticks[ticks.length - 1] || 1;
         const g = el("g", { transform: `translate(${PAD.left},${PAD.top})` }, svg);
         const fmt = o.yFormat ?? ((v) => v.toLocaleString("es-PE"));
         for (const t of ticks) {
@@ -84,7 +88,7 @@ export function barChart(o) {
             title.textContent = `${o.labels[i]}: ${fmt(v)}`;
         });
         // Etiquetas del eje X: todas si caben, si no las de los extremos y la resaltada.
-        const labelWidth = Math.max(...o.labels.map((l) => l.length)) * 7 + 6;
+        const labelWidth = Math.max(1, ...o.labels.map((l) => l.length)) * 7 + 6;
         const every = Math.max(1, Math.ceil(labelWidth / slot));
         o.labels.forEach((l, i) => {
             const show = i % every === 0 || i === o.highlight;
@@ -98,6 +102,8 @@ export function barChart(o) {
         });
         text(g, w / 2, h + 34, o.xTitle, { class: "axis-title", "text-anchor": "middle" });
         for (const r of o.refLines ?? []) {
+            if (!Number.isFinite(r.at))
+                continue;
             const x = Math.min(w, Math.max(0, r.at * slot));
             el("line", { x1: x, x2: x, y1: -4, y2: h, class: `ref ${r.cls}` }, g);
         }
@@ -114,7 +120,9 @@ export function lineChart(o) {
         const w = width - PAD.left - PAD.right;
         const h = height - PAD.top - PAD.bottom;
         const g = el("g", { transform: `translate(${PAD.left},${PAD.top})` }, svg);
-        const all = o.series.flatMap((s) => s.ys);
+        const all = o.series.flatMap((s) => s.ys).filter(Number.isFinite);
+        if (!all.length || !o.xs.length)
+            return svg;
         let ticks;
         let top;
         let tickLabel;
@@ -129,7 +137,7 @@ export function lineChart(o) {
         }
         else {
             ticks = niceTicks(o.yMax ?? Math.max(...all));
-            top = ticks[ticks.length - 1];
+            top = ticks[ticks.length - 1] || 1;
             tickLabel = o.yFormat ?? ((v) => v.toLocaleString("es-PE"));
         }
         const minX = o.xs[0] ?? 0;

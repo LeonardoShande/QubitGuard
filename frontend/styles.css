@@ -151,7 +151,7 @@ legend { padding: 0; }
 .state:empty { display: none; }
 .error { color: var(--err); font-size: 0.875rem; }
 .error:empty { display: none; }
-.retry { margin-left: 0.5rem; }
+.retry { justify-self: start; align-self: start; width: max-content; margin-top: 0.5rem; }
 
 /* Formularios ---------------------------------------------------------- */
 .field { display: grid; gap: 0.4rem; min-width: 0; align-content: start; }
@@ -258,7 +258,7 @@ select.input { appearance: auto; }
 .caption-note { margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); }
 .caption-note:empty { display: none; }
 .chart { width: 100%; min-height: 1px; }
-.chart svg { display: block; overflow: visible; }
+.chart svg { display: block; overflow: visible; max-width: 100%; height: auto; }
 
 .metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
 @media (min-width: 640px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -276,7 +276,7 @@ select.input { appearance: auto; }
 
 /* Gráficos SVG ---------------------------------------------------------- */
 .grid { stroke: var(--line); stroke-width: 1; }
-.axis { stroke: var(--line-2); stroke-width: 1; }
+.axis { stroke: var(--edge); stroke-width: 1; }
 .tick { fill: var(--muted); font: 11px var(--mono); }
 .tick--hi { fill: var(--cyan); font-weight: 600; }
 .axis-title { fill: var(--muted); font: 12px var(--sans); }
@@ -449,8 +449,8 @@ select.input { appearance: auto; }
 .mark--theory { border: 2px solid var(--text); border-radius: 50%; background: var(--panel); }
 .mark--measured { width: 10px; height: 10px; margin-left: -5px; top: 9px; border-radius: 50%; background: var(--cyan); }
 .scale__min, .scale__max { position: absolute; top: 24px; font-size: 0.75rem; color: var(--muted); }
-.scale__min { left: 0; transform: translateX(-50%); }
-.scale__max { right: 0; transform: translateX(50%); }
+.scale__min { left: 0; }
+.scale__max { right: 0; text-align: right; }
 .ppo__score { font-weight: 600; }
 .ppo__explain { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.4rem; color: var(--muted); font-size: 0.925rem; max-width: 70ch; }
 .ppo__explain li::marker { color: var(--cyan); }

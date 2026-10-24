@@ -78,7 +78,8 @@ export interface DailyChallenge {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  /** Segundos de Retry-After (503 del simulador ocupado); 0 si no aplica. */
+  constructor(public status: number, message: string, public retryAfter = 0) {
     super(message);
   }
 }
@@ -101,7 +102,8 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
       detail = typeof data.detail === "string" ? data.detail
         : Array.isArray(data.detail) ? data.detail.map((d: { msg?: string }) => d.msg ?? "").join("; ") : "";
     } catch { /* cuerpo no JSON */ }
-    throw new ApiError(res.status, detail);
+    const wait = Number(res.headers.get("Retry-After"));
+    throw new ApiError(res.status, detail, Number.isFinite(wait) && wait > 0 ? Math.min(wait, 60) : res.status === 503 ? 2 : 0);
   }
   return (await res.json()) as T;
 }
@@ -132,14 +134,18 @@ export const api = {
   },
   pqc: () => cached("/api/learn/pqc", () => request<{ cards: PqcCard[] }>("/api/learn/pqc")),
   limitations: () => cached("/api/learn/limitations", () => request<{ items: Limitation[] }>("/api/learn/limitations")),
-  daily: () => cached("/api/challenge/daily", () => request<DailyChallenge>("/api/challenge/daily")),
+  /** `date` es la fecha local del navegador; forma parte de la clave, así que tras medianoche se pide el reto nuevo. */
+  daily: (date: string) => {
+    const path = `/api/challenge/daily?date=${encodeURIComponent(date)}`;
+    return cached(path, () => request<DailyChallenge>(path));
+  },
 };
 
 /** Mensaje para el usuario según el tipo de fallo. */
 export function describeError(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.status === 0) return err.message + " Comprueba que el backend esté en marcha.";
-    if (err.status === 503) return "El simulador está ocupado con otra ejecución. Espera un par de segundos y reintenta.";
+    if (err.status === 503) return `Simulador ocupado con otra ejecución. Podrás reintentar en ${err.retryAfter || 2} s.`;
     if (err.status === 501) return "Este módulo todavía se está preparando en el servidor. Prueba de nuevo en unos minutos.";
     if (err.status === 422) return `Revisa los valores: ${err.message || "el servidor los rechazó."}`;
     return `El servidor respondió con un error ${err.status}${err.message ? `: ${err.message}` : "."}`;

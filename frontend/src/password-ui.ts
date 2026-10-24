@@ -26,6 +26,19 @@ const STRENGTH_COLOR: Record<Strength, string> = {
 
 const fmtBits = (b: number) => b.toLocaleString("es-PE", { maximumFractionDigits: 1 });
 
+/**
+ * Anuncio para lectores de pantalla con espera: al teclear o arrastrar un slider solo se lee el
+ * último estado, no uno por pulsación. Nunca recibe la contraseña, solo el veredicto y los bits.
+ */
+function announcer(id: string): (text: string) => void {
+  const region = $(id);
+  let timer = 0;
+  return (text) => {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => { region.textContent = text; }, 700);
+  };
+}
+
 export function initPasswordUI(hooks: PasswordHooks): void {
   initAnalyzer(hooks);
   initGenerator(hooks);
@@ -34,6 +47,7 @@ export function initPasswordUI(hooks: PasswordHooks): void {
 // Analizador ----------------------------------------------------------------
 
 function initAnalyzer(hooks: PasswordHooks): void {
+  const announce = announcer("pw-live");
   const input = $<HTMLInputElement>("pw-input");
   const toggle = $<HTMLButtonElement>("pw-toggle");
   const rateInput = $<HTMLInputElement>("pw-rate");
@@ -63,6 +77,7 @@ function initAnalyzer(hooks: PasswordHooks): void {
       h("span", {}, `${p.label} (${p.chars} caracteres)`),
       h("span", { class: "mono" }, `−${p.bits.toFixed(1)} bits`),
     )));
+    announce(empty ? "" : `${STRENGTH_LABEL[a.strength]}: ${a.bits.toFixed(1)} bits estimados.`);
     if (a.bits >= GROVER_GOAL_BITS) hooks.onStrong("analizada");
   };
 
@@ -83,6 +98,7 @@ function initAnalyzer(hooks: PasswordHooks): void {
 type Mode = "chars" | "passphrase" | "strengthen";
 
 function initGenerator(hooks: PasswordHooks): void {
+  const announceGoal = announcer("gen-live");
   const form = $<HTMLFormElement>("gen-form");
   const out = $("gen-value");
   const showBtn = $<HTMLButtonElement>("gen-show");
@@ -170,6 +186,7 @@ function initGenerator(hooks: PasswordHooks): void {
     status.textContent = byUser && problem ? problem : "";
     paintValue();
     paintMetrics();
+    if (byUser && next) announceGoal(`${fmtBits(next.bits)} bits. ${$("gen-goal").textContent}`);
     if (byUser && next && next.bits >= GROVER_GOAL_BITS) hooks.onStrong("generada");
   };
 
@@ -201,9 +218,11 @@ function initGenerator(hooks: PasswordHooks): void {
     await new Promise(requestAnimationFrame);
     status.textContent = ok
       ? "Copiada. El portapapeles ya es tu responsabilidad: pégala en tu gestor y copia otra cosa después."
-      : "Tu navegador no permitió copiar. Pulsa Mostrar y selecciona el texto a mano.";
+      : "Tu navegador no permitió copiar. Pulsa Mostrar, enfoca la contraseña (con Tab o un clic) y cópiala con Ctrl+C o Cmd+C.";
   });
 
+  // Al enfocarla con teclado se selecciona entera, para copiarla a mano si el portapapeles falla.
+  out.addEventListener("focus", () => { if (visible && current) getSelection()?.selectAllChildren(out); });
   window.addEventListener("pagehide", () => { current = null; out.replaceChildren(); });
   syncMode();
   generate(false);

@@ -6,7 +6,7 @@ export interface Progress {
   xp: number;
   streak: number;
   bestStreak: number;
-  /** Última fecha (UTC, AAAA-MM-DD) en que se respondió el reto diario. */
+  /** Última fecha local (AAAA-MM-DD) en que se respondió el reto diario. */
   lastChallengeDate: string | null;
   /** Respuestas por fecha de reto: índice elegido y si fue correcta. */
   answers: Record<string, { choice: number; correct: boolean }>;
@@ -68,6 +68,14 @@ export function load(): Progress {
     if (!Array.isArray(p.path)) p.path = [];
     if (!Array.isArray(p.achievements)) p.achievements = [];
     if (typeof p.predictions?.count !== "number") p.predictions = { date: "", count: 0 };
+    const count = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+    const dict = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
+    p.xp = count(p.xp);
+    p.streak = count(p.streak);
+    p.bestStreak = count(p.bestStreak);
+    p.answers = dict(p.answers) as Progress["answers"];
+    p.activity = dict(p.activity) as Progress["activity"];
+    if (typeof p.lastChallengeDate !== "string") p.lastChallengeDate = null;
     return p;
   } catch {
     return structuredClone(EMPTY);
@@ -80,8 +88,10 @@ function save(p: Progress): void {
   } catch { /* modo privado o almacenamiento bloqueado: el progreso vive solo en esta pestaña */ }
 }
 
-export function todayUTC(): string {
-  return new Date().toISOString().slice(0, 10);
+/** Fecha LOCAL del navegador (AAAA-MM-DD): el reto, la racha y los topes diarios cambian a medianoche local. */
+export function todayLocal(now = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 function previousDay(date: string): string {
@@ -100,14 +110,14 @@ export function levelInfo(xp: number) {
 }
 
 /** La racha visible se rompe si no se respondió ni hoy ni ayer. */
-export function currentStreak(p: Progress, today = todayUTC()): number {
+export function currentStreak(p: Progress, today = todayLocal()): number {
   if (!p.lastChallengeDate) return 0;
   return p.lastChallengeDate === today || p.lastChallengeDate === previousDay(today) ? p.streak : 0;
 }
 
 export interface Award { xp: number; reason: string }
 
-/** Registra la respuesta del reto de una fecha. Solo puntúa la primera vez. */
+/** Registra la respuesta del reto de una fecha local. Solo puntúa la primera vez. */
 export function answerChallenge(p: Progress, date: string, choice: number, correct: boolean): Award | null {
   if (p.answers[date]) return null;
   p.answers[date] = { choice, correct };
@@ -147,7 +157,7 @@ export const PREDICTIONS_PER_DAY = 5;
 
 /** XP por cercanía de una predicción; solo las primeras PREDICTIONS_PER_DAY del día puntúan. */
 export function rewardPrediction(p: Progress, xp: number, reason: string): Award | null {
-  const today = todayUTC();
+  const today = todayLocal();
   if (p.predictions.date !== today) p.predictions = { date: today, count: 0 };
   if (xp <= 0 || p.predictions.count >= PREDICTIONS_PER_DAY) return null;
   p.predictions.count += 1;
@@ -157,7 +167,7 @@ export function rewardPrediction(p: Progress, xp: number, reason: string): Award
 }
 
 export function rewardActivity(p: Progress, activity: string, xp: number, reason: string): Award | null {
-  const today = todayUTC();
+  const today = todayLocal();
   if (p.activity[activity] === today) return null;
   p.activity[activity] = today;
   p.xp += xp;

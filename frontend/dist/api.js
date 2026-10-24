@@ -1,9 +1,12 @@
 // Cliente del contrato docs/API.md. Rutas relativas: la UI se sirve desde el mismo FastAPI.
 export class ApiError extends Error {
     status;
-    constructor(status, message) {
+    retryAfter;
+    /** Segundos de Retry-After (503 del simulador ocupado); 0 si no aplica. */
+    constructor(status, message, retryAfter = 0) {
         super(message);
         this.status = status;
+        this.retryAfter = retryAfter;
     }
 }
 async function request(path, body) {
@@ -26,7 +29,8 @@ async function request(path, body) {
                 : Array.isArray(data.detail) ? data.detail.map((d) => d.msg ?? "").join("; ") : "";
         }
         catch { /* cuerpo no JSON */ }
-        throw new ApiError(res.status, detail);
+        const wait = Number(res.headers.get("Retry-After"));
+        throw new ApiError(res.status, detail, Number.isFinite(wait) && wait > 0 ? Math.min(wait, 60) : res.status === 503 ? 2 : 0);
     }
     return (await res.json());
 }
@@ -52,7 +56,11 @@ export const api = {
     },
     pqc: () => cached("/api/learn/pqc", () => request("/api/learn/pqc")),
     limitations: () => cached("/api/learn/limitations", () => request("/api/learn/limitations")),
-    daily: () => cached("/api/challenge/daily", () => request("/api/challenge/daily")),
+    /** `date` es la fecha local del navegador; forma parte de la clave, así que tras medianoche se pide el reto nuevo. */
+    daily: (date) => {
+        const path = `/api/challenge/daily?date=${encodeURIComponent(date)}`;
+        return cached(path, () => request(path));
+    },
 };
 /** Mensaje para el usuario según el tipo de fallo. */
 export function describeError(err) {
@@ -60,7 +68,7 @@ export function describeError(err) {
         if (err.status === 0)
             return err.message + " Comprueba que el backend esté en marcha.";
         if (err.status === 503)
-            return "El simulador está ocupado con otra ejecución. Espera un par de segundos y reintenta.";
+            return `Simulador ocupado con otra ejecución. Podrás reintentar en ${err.retryAfter || 2} s.`;
         if (err.status === 501)
             return "Este módulo todavía se está preparando en el servidor. Prueba de nuevo en unos minutos.";
         if (err.status === 422)

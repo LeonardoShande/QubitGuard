@@ -14,12 +14,25 @@ const STRENGTH_COLOR = {
     "razonable": "#e9d26a", "fuerte": "var(--ok)", "muy-fuerte": "var(--cyan)",
 };
 const fmtBits = (b) => b.toLocaleString("es-PE", { maximumFractionDigits: 1 });
+/**
+ * Anuncio para lectores de pantalla con espera: al teclear o arrastrar un slider solo se lee el
+ * último estado, no uno por pulsación. Nunca recibe la contraseña, solo el veredicto y los bits.
+ */
+function announcer(id) {
+    const region = $(id);
+    let timer = 0;
+    return (text) => {
+        clearTimeout(timer);
+        timer = window.setTimeout(() => { region.textContent = text; }, 700);
+    };
+}
 export function initPasswordUI(hooks) {
     initAnalyzer(hooks);
     initGenerator(hooks);
 }
 // Analizador ----------------------------------------------------------------
 function initAnalyzer(hooks) {
+    const announce = announcer("pw-live");
     const input = $("pw-input");
     const toggle = $("pw-toggle");
     const rateInput = $("pw-rate");
@@ -48,6 +61,7 @@ function initAnalyzer(hooks) {
             list.replaceChildren(h("li", { class: "is-clean" }, "No detectamos patrones obvios (palabras comunes, secuencias, teclado, años o repeticiones)."));
         else
             list.replaceChildren(...a.penalties.map((p) => h("li", {}, h("span", {}, `${p.label} (${p.chars} caracteres)`), h("span", { class: "mono" }, `−${p.bits.toFixed(1)} bits`))));
+        announce(empty ? "" : `${STRENGTH_LABEL[a.strength]}: ${a.bits.toFixed(1)} bits estimados.`);
         if (a.bits >= GROVER_GOAL_BITS)
             hooks.onStrong("analizada");
     };
@@ -63,6 +77,7 @@ function initAnalyzer(hooks) {
     render();
 }
 function initGenerator(hooks) {
+    const announceGoal = announcer("gen-live");
     const form = $("gen-form");
     const out = $("gen-value");
     const showBtn = $("gen-show");
@@ -153,6 +168,8 @@ function initGenerator(hooks) {
         status.textContent = byUser && problem ? problem : "";
         paintValue();
         paintMetrics();
+        if (byUser && next)
+            announceGoal(`${fmtBits(next.bits)} bits. ${$("gen-goal").textContent}`);
         if (byUser && next && next.bits >= GROVER_GOAL_BITS)
             hooks.onStrong("generada");
     };
@@ -186,8 +203,11 @@ function initGenerator(hooks) {
         await new Promise(requestAnimationFrame);
         status.textContent = ok
             ? "Copiada. El portapapeles ya es tu responsabilidad: pégala en tu gestor y copia otra cosa después."
-            : "Tu navegador no permitió copiar. Pulsa Mostrar y selecciona el texto a mano.";
+            : "Tu navegador no permitió copiar. Pulsa Mostrar, enfoca la contraseña (con Tab o un clic) y cópiala con Ctrl+C o Cmd+C.";
     });
+    // Al enfocarla con teclado se selecciona entera, para copiarla a mano si el portapapeles falla.
+    out.addEventListener("focus", () => { if (visible && current)
+        getSelection()?.selectAllChildren(out); });
     window.addEventListener("pagehide", () => { current = null; out.replaceChildren(); });
     syncMode();
     generate(false);

@@ -10,7 +10,7 @@ const AMBIGUOUS = new Set("0Oo1lI|`'\"!ij;:,.");
 const UINT32_RANGE = 2 ** 32;
 export function randomInt(maxExclusive) {
     if (!Number.isInteger(maxExclusive) || maxExclusive < 1 || maxExclusive > UINT32_RANGE) {
-        throw new RangeError("El limite aleatorio debe ser un entero entre 1 y 2^32.");
+        throw new RangeError("El límite aleatorio debe ser un entero entre 1 y 2^32.");
     }
     const limit = UINT32_RANGE - (UINT32_RANGE % maxExclusive);
     const sample = new Uint32Array(1);
@@ -23,7 +23,7 @@ export function randomInt(maxExclusive) {
 export function countValidLog2(length, classSizes) {
     if (!Number.isSafeInteger(length) || length < 0 || classSizes.length === 0 ||
         classSizes.some((size) => !Number.isSafeInteger(size) || size < 1)) {
-        throw new RangeError("La longitud y los tamanos de clase deben ser enteros validos.");
+        throw new RangeError("La longitud y los tamaños de clase deben ser enteros válidos.");
     }
     const total = classSizes.reduce((sum, size) => sum + size, 0);
     if (!Number.isSafeInteger(total))
@@ -90,7 +90,7 @@ export function strengthen(base, targetRandomBits = 80) {
     if (typeof base !== "string")
         throw new TypeError("La base debe ser texto.");
     if (!Number.isFinite(targetRandomBits) || targetRandomBits <= 0) {
-        throw new RangeError("El objetivo de bits debe ser un numero positivo finito.");
+        throw new RangeError("El objetivo de bits debe ser un número positivo finito.");
     }
     if (base.length === 0) {
         let length = Math.max(8, Math.ceil(targetRandomBits / Math.log2(ASCII.length)));

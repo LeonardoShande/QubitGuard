@@ -89,7 +89,7 @@
     <section class="section wrap" id="reto" aria-labelledby="reto-title">
       <div class="section__head">
         <h2 id="reto-title">Reto diario</h2>
-        <p class="section__sub">Una pregunta nueva cada día (hora UTC). Acertar da 50 XP y mantener la racha suma un extra.</p>
+        <p class="section__sub">Una pregunta nueva cada día, a medianoche de tu hora local. Acertar da 50 XP y mantener la racha suma un extra.</p>
       </div>
       <div class="panel challenge" id="challenge" aria-busy="true">
         <p class="state" id="challenge-state" role="status">Cargando el reto de hoy…</p>
@@ -130,7 +130,7 @@
             <p class="visually-hidden" id="lab-random-hint">Elige un estado al azar con crypto.getRandomValues.</p>
             <p class="error" id="lab-marked-error"></p>
           </div>
-          <div class="field">
+          <div class="field" role="group" aria-labelledby="lab-iter-label">
             <span class="label" id="lab-iter-label">Iteraciones</span>
             <label class="check">
               <input type="checkbox" id="lab-auto" checked aria-controls="lab-iter">
@@ -156,8 +156,8 @@
           <fieldset class="predict">
             <legend>Tu predicción</legend>
             <div class="seg">
-              <label><input type="radio" name="pred-mode" value="prob" checked><span>Probabilidad de acertar</span></label>
-              <label><input type="radio" name="pred-mode" value="iter"><span>Iteraciones óptimas</span></label>
+              <label><input type="radio" name="pred-mode" value="prob" checked aria-controls="pred-prob-box"><span>Probabilidad de acertar</span></label>
+              <label><input type="radio" name="pred-mode" value="iter" aria-controls="pred-iter-box"><span>Iteraciones óptimas</span></label>
             </div>
             <div class="field" id="pred-prob-box">
               <label for="pred-prob">¿Con qué probabilidad saldrá el estado marcado? <output class="mono" id="pred-prob-out" for="pred-prob">50 %</output></label>
@@ -309,7 +309,7 @@
 
     <section class="section wrap" id="contrasena" aria-labelledby="pw-title">
       <div class="section__head">
-        <h2 id="pw-title">¿Qué tan segura es mi contraseña?</h2>
+        <h2 id="pw-title">Tu contraseña: ¿qué tan segura es?</h2>
         <p class="section__sub">Estimamos su entropía y cuánto tardaría un ataque de fuerza bruta clásico frente al límite teórico de Grover. Después, genera una que resista a ambos.</p>
       </div>
       <p class="privacy" id="pw-privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3Z"/></svg>Tus contraseñas nunca salen de este navegador. No se envían, no se guardan y desaparecen al recargar.</p>
@@ -333,7 +333,7 @@
           </div>
           <div class="pw__out">
             <div class="meter" aria-hidden="true"><span class="meter__fill" id="pw-meter"></span></div>
-            <p class="pw__verdict" aria-live="polite"><b id="pw-strength">Sin analizar</b> <span class="mono" id="pw-bits"></span></p>
+            <p class="pw__verdict"><b id="pw-strength">Sin analizar</b> <span class="mono" id="pw-bits"></span></p>
             <dl class="metrics metrics--pw">
               <div><dt>Longitud</dt><dd class="mono" id="pw-len">0</dd></div>
               <div><dt>Alfabeto detectado</dt><dd class="mono" id="pw-alpha">—</dd><dd class="dd-note" id="pw-alpha-parts"></dd></div>
@@ -343,6 +343,7 @@
               <div><dt>Iteraciones de Grover</dt><dd class="mono" id="pw-giter">—</dd></div>
             </dl>
             <ul class="penalties" id="pw-penalties"></ul>
+            <p class="visually-hidden" id="pw-live" aria-live="polite"></p>
           </div>
         </div>
 
@@ -352,9 +353,9 @@
           <fieldset class="seg-field">
             <legend>Modo</legend>
             <div class="seg">
-              <label><input type="radio" name="gen-mode" value="chars" checked><span>Caracteres</span></label>
-              <label><input type="radio" name="gen-mode" value="passphrase"><span>Frase de palabras</span></label>
-              <label><input type="radio" name="gen-mode" value="strengthen"><span>Mejorar la mía</span></label>
+              <label><input type="radio" name="gen-mode" value="chars" checked aria-controls="gen-opts-chars"><span>Caracteres</span></label>
+              <label><input type="radio" name="gen-mode" value="passphrase" aria-controls="gen-opts-passphrase"><span>Frase de palabras</span></label>
+              <label><input type="radio" name="gen-mode" value="strengthen" aria-controls="gen-opts-strengthen"><span>Mejorar la mía</span></label>
             </div>
           </fieldset>
 
@@ -404,7 +405,7 @@
 
           <div class="gen__out">
             <p class="label" id="gen-value-label">Contraseña generada</p>
-            <p class="gen__value mono" id="gen-value"></p>
+            <p class="gen__value mono" id="gen-value" role="textbox" aria-readonly="true" aria-labelledby="gen-value-label" tabindex="0"></p>
             <div class="gen__actions">
               <button class="btn btn--primary" type="submit" id="gen-new">Generar otra</button>
               <button class="btn btn--ghost" type="button" id="gen-copy" aria-describedby="gen-clip">Copiar</button>
@@ -416,7 +417,8 @@
             <div class="goal">
               <p class="goal__label">Meta resistente a Grover: <b class="mono">≥ 128 bits</b> (64 efectivos)</p>
               <div class="goal__track" aria-hidden="true"><span class="goal__fill" id="gen-meter"></span><span class="goal__line"></span></div>
-              <p class="goal__text" id="gen-goal" aria-live="polite"></p>
+              <p class="goal__text" id="gen-goal"></p>
+              <p class="visually-hidden" id="gen-live" aria-live="polite"></p>
             </div>
             <dl class="metrics metrics--gen">
               <div><dt>Entropía exacta</dt><dd class="mono" id="gen-bits">—</dd></div>
@@ -440,7 +442,7 @@
 
     <section class="section wrap" id="limites" aria-labelledby="lim-title">
       <div class="section__head">
-        <h2 id="lim-title">Lo que esta demo no demuestra</h2>
+        <h2 id="lim-title">Limitaciones: lo que esta demo no demuestra</h2>
         <p class="section__sub">Límites honestos de la simulación y del algoritmo.</p>
       </div>
       <p class="state" id="lim-state" role="status">Cargando…</p>

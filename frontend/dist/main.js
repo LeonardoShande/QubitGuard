@@ -1,24 +1,48 @@
-import { api, describeError } from "./api.js";
+import { api, ApiError, describeError } from "./api.js";
 import { barChart, lineChart, mount } from "./charts.js";
 import { $, fieldError, h, motion } from "./dom.js";
 import { formatPow10 } from "./password.js";
 import { initPasswordUI } from "./password-ui.js";
 import * as progress from "./progress.js";
 // Utilidades -------------------------------------------------------------
-/** Mensaje de estado; con `retry` añade un botón para reintentar. */
-function setState(node, message, retry) {
+/** Segundos que pide esperar el servidor (Retry-After de un 503), o 0. */
+const retryWait = (err) => (err instanceof ApiError ? err.retryAfter : 0);
+const retryButtons = new WeakMap();
+/**
+ * Mensaje de estado. Con `retry` añade "Reintentar" como hermano, fuera de la región role="status"
+ * (un control dentro de una live region confunde a los lectores). Si el error trae Retry-After,
+ * el botón espera con cuenta atrás.
+ */
+function setState(node, message, retry, err) {
     node.classList.toggle("is-error", Boolean(retry));
     node.replaceChildren(message);
-    if (retry) {
-        const btn = h("button", { type: "button", class: "btn btn--ghost retry" }, "Reintentar");
-        btn.addEventListener("click", retry);
-        node.append(btn);
-    }
+    retryButtons.get(node)?.remove();
+    if (!retry)
+        return;
+    const btn = h("button", { type: "button", class: "btn btn--ghost btn--sm retry" }, "Reintentar");
+    btn.addEventListener("click", () => { btn.remove(); retry(); });
+    node.after(btn);
+    retryButtons.set(node, btn);
+    let wait = retryWait(err);
+    const tick = () => {
+        btn.disabled = wait > 0;
+        btn.textContent = wait > 0 ? `Reintentar en ${wait} s` : "Reintentar";
+        if (wait-- > 0)
+            window.setTimeout(tick, 1000);
+    };
+    tick();
 }
 function setBusy(btn, busy, label) {
     btn.disabled = busy;
     btn.classList.toggle("is-busy", busy);
     btn.textContent = label;
+}
+/** Libera un formulario tras una petición; con 503 mantiene el botón deshabilitado lo que pida Retry-After. */
+function release(btn, label, err, done) {
+    setBusy(btn, false, label);
+    const wait = retryWait(err);
+    btn.disabled = wait > 0;
+    window.setTimeout(() => { btn.disabled = false; done(); }, wait * 1000);
 }
 /** Porcentaje con 1 decimal, o 2 por debajo del 10 % para que 1/16 se lea 6,25 % y no 6,3 %. */
 const pct = (x) => `${(x * 100).toLocaleString("es-PE", { maximumFractionDigits: Math.abs(x) < 0.1 ? 2 : 1 })} %`;
@@ -186,19 +210,23 @@ const KIND_LABEL = {
     success_probability: "Probabilidad de éxito",
     classical_vs_grover: "Clásico frente a Grover",
 };
+/** Fecha local del reto mostrado; si la pestaña cruza medianoche se pide el nuevo al volver a ella. */
+let challengeDate = "";
 async function loadChallenge() {
     const box = $("challenge");
     const state = $("challenge-state");
+    const today = progress.todayLocal();
     box.setAttribute("aria-busy", "true");
     setState(state, "Cargando el reto de hoy…");
     try {
-        const c = await api.daily();
+        const c = await api.daily(today);
+        challengeDate = today;
         renderChallenge(c);
         state.replaceChildren();
         $("challenge-body").hidden = false;
     }
     catch (err) {
-        setState(state, describeError(err), loadChallenge);
+        setState(state, describeError(err), loadChallenge, err);
     }
     finally {
         box.setAttribute("aria-busy", "false");
@@ -208,6 +236,7 @@ function renderChallenge(c) {
     $("challenge-date").textContent = c.date;
     $("challenge-n").textContent = `${KIND_LABEL[c.kind] ?? c.kind}, n = ${c.n_qubits} qubits`;
     $("challenge-q").textContent = c.question;
+    $("challenge-feedback").replaceChildren();
     const buttons = c.options.map((text, i) => {
         const btn = h("button", { type: "button", class: "option", "aria-label": `Opción ${String.fromCharCode(65 + i)}: ${text}` }, h("span", { class: "option__key", "aria-hidden": "true" }, String.fromCharCode(65 + i)), h("span", {}, text), h("span", { class: "option__mark" }));
         btn.addEventListener("click", () => {
@@ -261,13 +290,17 @@ function initLab() {
     const predProb = $("pred-prob");
     const predIter = $("pred-iter");
     let lastRunIterations = null;
+    /** Guarda contra doble envío: Enter en un campo dispara submit aunque el botón esté deshabilitado. */
+    let running = false;
+    /** Sube con cada envío y con cada cambio de qubits: una respuesta con otro número llega obsoleta y se descarta. */
+    let runId = 0;
     /** Tamaños para los que ya se ejecutó: la curva teórica y el óptimo solo se muestran tras observar. */
     const revealed = new Set();
     const n = () => Number(nInput.value);
     const predMode = () => form.elements.namedItem("pred-mode").value;
     const chosenIterations = () => {
         const manual = Number(iter.value);
-        return auto.checked || !Number.isInteger(manual) ? optimalIterations(n()) : manual;
+        return auto.checked || !Number.isInteger(manual) || manual < 0 || manual > 20 ? optimalIterations(n()) : manual;
     };
     const syncPrediction = () => {
         const iterMode = predMode() === "iter";
@@ -287,6 +320,7 @@ function initLab() {
         $("pred-sqrt").textContent = (Math.PI / 4 * Math.sqrt(2 ** bits)).toLocaleString("es-PE", { maximumFractionDigits: 2 });
         marked.maxLength = bits;
         marked.value = marked.value.replace(/[^01]/g, "").padStart(bits, "0").slice(-bits);
+        fieldError(marked, ""); // tras ajustar la longitud el valor vuelve a ser válido
         if (auto.checked)
             iter.value = String(optimalIterations(bits));
         nInput.setAttribute("aria-valuetext", `${bits} qubits, ${2 ** bits} estados`);
@@ -334,7 +368,7 @@ function initLab() {
             catch (err) {
                 if (bits === n() && revealed.has(bits)) {
                     $("lab-curve").replaceChildren();
-                    setState($("lab-curve-note"), `No se pudo cargar la curva. ${describeError(err)}`, loadCurve);
+                    setState($("lab-curve-note"), `No se pudo cargar la curva. ${describeError(err)}`, loadCurve, err);
                 }
                 return;
             }
@@ -357,7 +391,7 @@ function initLab() {
             ? "Laboratorio listo: ruido activado. Predice y ejecuta."
             : `Laboratorio listo con ${setup.auto ? "el óptimo de" : setup.iterations} iteraciones. Predice y ejecuta.`;
     };
-    nInput.addEventListener("input", syncN);
+    nInput.addEventListener("input", () => { runId++; syncN(); });
     nInput.addEventListener("change", () => { lastRunIterations = null; drawCurve(); void loadCurve(); });
     $("lab-random").addEventListener("click", () => {
         const bits = n();
@@ -382,6 +416,8 @@ function initLab() {
     });
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        if (running)
+            return;
         const bits = n();
         const validMarked = new RegExp(`^[01]{${bits}}$`).test(marked.value);
         fieldError(marked, validMarked ? "" : `Escribe exactamente ${bits} bits (solo 0 y 1), o pulsa Aleatorio.`);
@@ -396,12 +432,19 @@ function initLab() {
             focusFirstInvalid(form);
             return;
         }
+        running = true;
+        const id = ++runId;
+        let failure = null;
         setBusy(run, true, "Ejecutando…");
         setState(state, noisy.checked ? "Transpilando para FakeFez y simulando con ruido…" : "Simulando el circuito ideal…");
         try {
             const r = await api.grover({
                 n_qubits: bits, marked_state: marked.value, iterations, shots: shotCount, seed: null, noisy: noisy.checked,
             });
+            if (id !== runId) {
+                setState(state, "Cambiaste los qubits mientras corría la simulación; ese resultado se descartó. Ejecuta de nuevo.");
+                return;
+            }
             renderResult(r);
             lastRunIterations = r.iterations;
             revealed.add(r.n_qubits);
@@ -415,10 +458,11 @@ function initLab() {
             afterRun(r);
         }
         catch (err) {
-            setState(state, describeError(err), () => form.requestSubmit());
+            failure = err;
+            setState(state, describeError(err), () => form.requestSubmit(), err);
         }
         finally {
-            setBusy(run, false, "Ejecutar circuito");
+            release(run, "Ejecutar circuito", failure, () => { running = false; });
         }
     });
     syncN();
@@ -570,19 +614,28 @@ function initMonteCarlo() {
     const trialsInput = $("mc-trials");
     const run = $("mc-run");
     const state = $("mc-state");
+    let running = false;
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        if (running)
+            return;
         const bits = intIn(bitsInput, 2, 20, "Escribe un entero entre 2 y 20.");
         const trials = intIn(trialsInput, 1, 5000, "Escribe un entero entre 1 y 5000.");
         if (bits === null || trials === null) {
             focusFirstInvalid(form);
             return;
         }
+        running = true;
+        let failure = null;
         setBusy(run, true, "Simulando…");
         setState(state, "Buscando secretos al azar…");
         try {
             const r = await api.monteCarlo(bits, trials);
             const { bins, counts } = r.histogram;
+            if (!bins.length || bins.length !== counts.length) {
+                setState(state, "El servidor devolvió un histograma vacío.", () => form.requestSubmit());
+                return;
+            }
             const width = bins.length > 1 ? bins[1] - bins[0] : 1;
             const at = (v) => (width === 1 ? v - bins[0] + 0.5 : (v - bins[0]) / width);
             const draw = barChart({
@@ -615,10 +668,11 @@ function initMonteCarlo() {
             celebrate(progress.rewardActivity(player, "montecarlo", 10, "Primera simulación Monte Carlo del día"));
         }
         catch (err) {
-            setState(state, describeError(err), () => form.requestSubmit());
+            failure = err;
+            setState(state, describeError(err), () => form.requestSubmit(), err);
         }
         finally {
-            setBusy(run, false, "Simular");
+            release(run, "Simular", failure, () => { running = false; });
         }
     });
 }
@@ -627,12 +681,16 @@ function initCompare() {
     const maxInput = $("cmp-max");
     const run = $("cmp-run");
     const state = $("cmp-state");
+    let running = false;
     const load = async () => {
+        if (running)
+            return;
         const max = intIn(maxInput, 2, 256, "Escribe un entero entre 2 y 256.");
         if (max === null) {
             maxInput.focus();
             return;
         }
+        running = true;
         setBusy(run, true, "Cargando…");
         setState(state, "Cargando la comparación…");
         try {
@@ -641,10 +699,11 @@ function initCompare() {
             state.replaceChildren();
         }
         catch (err) {
-            setState(state, describeError(err), load);
+            setState(state, describeError(err), load, err);
         }
         finally {
             setBusy(run, false, "Actualizar");
+            running = false;
         }
     };
     form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
@@ -688,7 +747,7 @@ async function loadPqc() {
         state.replaceChildren();
     }
     catch (err) {
-        setState(state, describeError(err), loadPqc);
+        setState(state, describeError(err), loadPqc, err);
     }
 }
 async function loadLimitations() {
@@ -700,7 +759,7 @@ async function loadLimitations() {
         state.replaceChildren();
     }
     catch (err) {
-        setState(state, describeError(err), loadLimitations);
+        setState(state, describeError(err), loadLimitations, err);
     }
 }
 // Navegación: marca la sección visible ------------------------------------
@@ -708,19 +767,18 @@ function initNav() {
     const links = new Map();
     document.querySelectorAll(".nav__list a").forEach((a) => links.set(a.hash.slice(1), a));
     const sections = [...links.keys()].map((id) => document.getElementById(id)).filter((s) => s !== null);
-    let queued = false;
-    const update = () => {
-        queued = false;
-        // La sección activa es la última cuyo borde superior ya pasó el 40 % de la ventana.
-        const line = window.innerHeight * 0.4;
-        const current = sections.filter((s) => s.getBoundingClientRect().top <= line).pop();
+    // Activa la sección que cruza la línea del 40 % de la ventana, sin medir el layout en cada scroll.
+    const crossing = new Set();
+    const io = new IntersectionObserver((entries) => {
+        for (const e of entries)
+            (e.isIntersecting ? crossing.add(e.target) : crossing.delete(e.target));
+        const current = sections.filter((s) => crossing.has(s)).pop();
+        // Ya en el pie: se mantiene marcada la última sección.
+        if (!current && sections.at(-1).getBoundingClientRect().bottom < innerHeight * 0.4)
+            return;
         links.forEach((a, id) => (id === current?.id ? a.setAttribute("aria-current", "location") : a.removeAttribute("aria-current")));
-    };
-    window.addEventListener("scroll", () => { if (!queued) {
-        queued = true;
-        requestAnimationFrame(update);
-    } }, { passive: true });
-    update();
+    }, { rootMargin: "-40% 0px -60% 0px" });
+    sections.forEach((s) => io.observe(s));
 }
 renderHud();
 renderPath();
@@ -738,5 +796,11 @@ initPasswordUI({
     },
 });
 void loadChallenge();
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" || !challengeDate || challengeDate === progress.todayLocal())
+        return;
+    renderHud();
+    void loadChallenge();
+});
 void loadPqc();
 void loadLimitations();

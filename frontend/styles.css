@@ -691,7 +691,10 @@ select.input { appearance: auto; }
 .problem__loop li::before { content: counter(loop); flex: none; color: var(--cyan); font: 600 0.8rem var(--mono); }
 .problem__loop b { color: var(--text); }
 .problem__evidence { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
-.problem__evidence li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); }
+.problem__evidence li { display: flex; align-items: flex-start; gap: 0.5rem; }
+.problem__evidence li > span { flex: 0 0 0.9rem; }
+.problem__evidence li > p { flex: 1; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.problem__evidence code { display: inline; font-size: inherit; line-height: inherit; }
 .problem__ok { color: var(--ok); }
 .problem__todo { color: var(--warn); }
 

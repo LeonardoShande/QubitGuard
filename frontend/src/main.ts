@@ -6,6 +6,8 @@ import { formatPow10 } from "./password.js";
 import { initPasswordUI } from "./password-ui.js";
 import * as progress from "./progress.js";
 import { initAmbience } from "./ambience.js";
+import { initVaultUI } from "./vault-ui.js";
+import { initProgressUI } from "./progress-ui.js";
 
 // Utilidades -------------------------------------------------------------
 
@@ -871,3 +873,5 @@ document.addEventListener("visibilitychange", () => {
 });
 void loadPqc();
 void loadLimitations();
+initVaultUI(player, (award) => { celebrate(award); renderHud(); });
+initProgressUI(player, () => { renderHud(); renderPath(); renderAchievements(); void loadChallenge(); });

@@ -1,0 +1,146 @@
+/* Protege la bóveda: superficie aislada; conserva los tokens de QubitGuard. */
+.vault-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.vault-heading .section__sub { max-width: 68ch; margin-top: 12px; }
+.vault-heading > a { flex-shrink: 0; }
+.vault-shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); border: 1px solid var(--line-2); border-radius: 12px; background: var(--panel); overflow: hidden; }
+.vault-profile { background: var(--bg); padding: 28px 24px; border-right: 1px solid var(--line-2); }
+.vault-profile h3 { font-size: 1.3rem; margin: 12px 0; }
+.vault-profile > p { margin: 10px 0; }
+.vault-profile__state { color: var(--warn); }
+.vault[data-ready="true"] .vault-profile__state, .vault[data-complete="true"] .vault-profile__state { color: var(--ok); }
+.vault-door { width: 150px; max-width: 100%; display: block; margin: 0 auto 20px; fill: none; stroke: var(--edge); stroke-width: 2; }
+.vault-door__inner { fill: var(--panel); }
+.vault-door__wheel { transform-origin: 80px 72px; transition: transform 450ms var(--ease), stroke 240ms; }
+.vault[data-ready="true"] .vault-door__wheel { stroke: var(--cyan); }
+.vault[data-busy="true"] .vault-door__wheel { animation: vault-wheel-spin 1.8s linear infinite; }
+@keyframes vault-wheel-spin { to { transform: rotate(360deg); } }
+.vault[data-complete="true"] .vault-door__wheel { transform: rotate(90deg); stroke: var(--ok); }
+.vault[data-complete="true"] .vault-door__bolt { stroke: var(--ok); }
+.vault progress { display: block; width: 100%; height: 10px; margin: 16px 0; accent-color: var(--cyan); border: 0; border-radius: 8px; overflow: hidden; background: var(--line); }
+.vault progress::-webkit-progress-bar { background: var(--line); }
+.vault progress::-webkit-progress-value { background: var(--cyan); }
+.vault progress::-moz-progress-bar { background: var(--cyan); }
+.vault-small { color: var(--muted); font-size: .875rem; line-height: 1.6; }
+.vault-save { border-top: 1px solid var(--line-2); margin-top: 24px; padding-top: 16px; }
+.vault-save p { margin: 10px 0; font-size: .875rem; }
+.vault-save .btn { width: 100%; margin-top: 10px; white-space: normal; min-height: 44px; }
+#vault-backup-json { width: 100%; font-size: .75rem; resize: vertical; margin-top: 12px; }
+#vault-save-status { color: var(--ok); }
+#vault-save-status[data-state="blocked"] { color: var(--warn); }
+.vault-guide { padding: 12px 16px; margin: 0 0 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--line-2); font-size: .875rem; color: var(--muted); }
+.vault .vault-guide summary { padding: 4px 0; font-weight: 600; color: var(--text); min-height: 32px; }
+.vault-guide ol { padding-left: 20px; margin: 12px 0; }
+.vault-guide li { padding: 5px 0; }
+.vault-guide b { color: var(--text); }
+.vault-guide p + p { margin-top: 10px; }
+.vault-rating { --rating-color: var(--edge); padding: 18px 0 4px; }
+.vault-rating[data-tier="meh"] { --rating-color: var(--warn); }
+.vault-rating[data-tier="good"] { --rating-color: var(--ok); }
+.vault-rating[data-tier="epic"] { --rating-color: var(--cyan); }
+.vault-rating[data-tier="aura"] { --rating-color: var(--magenta); }
+.vault-rating__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: var(--rating-color); }
+.vault-rating__head h4 { margin: 0; font-size: 1.1rem; line-height: 1.4; }
+.vault-rating__head > span { flex-shrink: 0; }
+.vault-rating progress { accent-color: var(--rating-color); height: 8px; margin: 12px 0; }
+.vault-rating progress::-webkit-progress-value { background: var(--rating-color); }
+.vault-rating progress::-moz-progress-bar { background: var(--rating-color); }
+.vault-rating p { margin: 8px 0; }
+.vault-rating[data-tier="aura"] .vault-rating__head { animation: vault-aura-in 350ms var(--ease); }
+@keyframes vault-aura-in { from { opacity: .5; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.vault-rank-list { margin: 24px 0; font-size: .875rem; }
+.vault-rank-list ol { list-style: none; padding: 0; }
+.vault-rank-list li { padding: 6px 0; color: var(--muted); }
+.vault-rank-list li[aria-current="true"] { color: var(--cyan); font-weight: 600; }
+.vault-workspace { padding: 24px 28px 32px; min-width: 0; }
+.vault-missions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-bottom: 1px solid var(--line-2); }
+.vault-missions button { display: grid; align-content: start; gap: 6px; min-height: 115px; padding: 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); text-align: left; font: inherit; cursor: pointer; }
+.vault-missions button .mono { font-size: .75rem; }
+.vault-missions button > span:last-child { font-size: .8rem; }
+.vault-missions button[aria-pressed="true"] { color: var(--text); background: var(--cyan-soft); border-bottom-color: var(--cyan); }
+.vault-missions button[data-state="done"] > .mono::after { content: " ✓"; color: var(--ok); font-weight: 700; }
+/* Franja de fases de la misión activa: decorativa (aria-hidden); la estructura y las leyendas ya describen el paso. */
+.vault-phases { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 16px 0 0; padding: 0; list-style: none; font-size: .8rem; color: var(--muted); }
+.vault-phases li { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--line-2); border-radius: 999px; transition: color 160ms var(--ease), border-color 160ms var(--ease), background 160ms var(--ease); }
+.vault-phases li[data-state="current"] { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-soft); }
+.vault-phases li[data-state="done"] { color: var(--ok); border-color: var(--ok); }
+.vault-phases li[data-state="done"]::before { content: "✓"; font-weight: 700; }
+.vault button:disabled { cursor: default; opacity: .55; }
+.vault button:not(:disabled):hover { background-color: var(--panel-2); }
+.vault button.btn--primary:not(:disabled):hover { background: #8eeaf3; }
+.vault-brief { margin: 28px 0; }
+.vault-brief h3 { font-size: 1.5rem; margin-bottom: 12px; }
+.vault-brief p { margin-top: 8px; max-width: 68ch; overflow-wrap: anywhere; }
+.vault-brief p:last-child { font-size: .875rem; color: var(--cyan); }
+.vault-stage { border-top: 1px solid var(--line-2); padding-top: 16px; margin-top: 24px; }
+.vault-stage legend { font-weight: 600; padding-right: 12px; font-size: 1rem; }
+.vault-stage[data-done="true"] > legend::after { content: "✓"; margin-left: 8px; color: var(--ok); font-weight: 700; }
+.vault-stage legend span { display: inline-block; font-size: .8rem; color: var(--muted); font-weight: 400; margin-left: 10px; }
+.vault-stage > label { display: block; margin-bottom: 8px; }
+.vault-stage .input { width: 100%; min-height: 46px; }
+.vault-stage .hint { margin: 8px 0 14px; }
+.vault-stage > p { max-width: 68ch; }
+.vault-checks { padding-left: 20px; color: var(--muted); font-size: .875rem; margin: 16px 0; }
+.vault-checks li { padding: 4px 0; }
+.vault-checks [data-ok="true"] { color: var(--ok); }
+.vault-choices { display: grid; gap: 10px; margin-top: 14px; }
+.vault-choice, .vault-answer { display: flex; align-items: center; gap: 12px; padding: 14px 16px; min-height: 48px; border: 1px solid var(--edge); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.vault-choice:has(input:checked) { border-color: var(--cyan); background: var(--cyan-soft); }
+.vault-choice input { accent-color: var(--cyan); width: 18px; height: 18px; flex-shrink: 0; }
+.vault-choice input:focus-visible { outline-offset: 4px; }
+.vault-choice span, .vault-answer { min-width: 0; }
+.vault-answer[aria-disabled="true"] { cursor: default; }
+.vault-answer[data-state="wrong"] { border-color: var(--err); background: rgba(255, 128, 128, 0.07); }
+.vault-answer[data-state="correct"] { border-color: var(--ok); background: rgba(110, 227, 154, 0.1); }
+.vault button.vault-answer:disabled { opacity: .55; }
+.vault button.vault-answer:disabled[data-state="correct"] { opacity: 1; }
+.vault-launch { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 24px 0 12px; }
+.vault-launch > span { color: var(--muted); font-size: .875rem; }
+.vault .state { margin-top: 12px; }
+.vault details { margin-top: 18px; }
+.vault summary { cursor: pointer; color: var(--cyan); padding: 8px 0; }
+.vault-model-note { color: var(--muted); font-size: .875rem; }
+#vault-backend { overflow-wrap: anywhere; }
+.vault-result { margin-top: 30px; padding-top: 28px; border-top: 1px solid var(--line-2); }
+.vault-result > h3 { font-size: 1.25rem; margin-bottom: 8px; }
+.vault-measures { display: flex; flex-wrap: wrap; gap: 24px; margin: 24px 0 16px; }
+.vault-measures dt { color: var(--muted); font-size: .875rem; }
+.vault-measures dd { margin: 4px 0 0; font-size: 1.75rem; color: var(--cyan); }
+.vault-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 18px 0; }
+.vault-cell { position: relative; isolation: isolate; display: grid; padding: 12px; overflow: hidden; border: 1px solid var(--line-2); border-radius: 6px; font-size: .875rem; background: var(--bg); }
+.vault-cell::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--cyan-soft); transform: scaleY(var(--frequency)); transform-origin: bottom; transition: transform 450ms var(--ease) min(calc(var(--i, 0) * 18ms), 260ms); }
+.vault-cell[data-target="true"] { border-color: var(--cyan); }
+.vault-cell[data-target="true"] > span:first-child { color: var(--cyan); }
+.vault-cell__label { font-size: .75rem; color: var(--muted); }
+.vault pre { overflow: auto; padding: 16px; background: var(--bg); font: .8rem/1.5 var(--mono); max-height: 300px; }
+#vault-answer-feedback { margin-top: 18px; }
+.vault-finish { margin-top: 24px; padding: 24px 0 0; border-top: 1px solid var(--ok); }
+.vault-finish h3 { color: var(--ok); font-size: 1.6rem; margin-bottom: 12px; }
+.vault-finish p { margin-top: 8px; }
+@media (max-width: 900px) {
+  .vault-shell { grid-template-columns: 1fr; }
+  .vault-profile { border-right: 0; border-bottom: 1px solid var(--line-2); }
+  .vault-door { float: right; width: 110px; margin: 0 0 10px 16px; }
+  .vault-profile .vault-small { clear: both; }
+  .vault-profile progress { max-width: 360px; }
+}
+@media (max-width: 600px) {
+  .vault-heading { display: block; }
+  .vault-heading > a { display: inline-block; margin-top: 16px; }
+  .vault-workspace, .vault-profile { padding: 20px 16px; }
+  .vault-missions { grid-template-columns: 1fr; }
+  .vault-missions button { min-height: 0; padding: 12px; gap: 2px; }
+  .vault-missions button > span:last-child { display: none; }
+  .vault-phases { gap: 6px 8px; font-size: .75rem; }
+  .vault-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vault-measures { gap: 16px; }
+  .vault-measures dd { font-size: 1.4rem; }
+  .vault-stage legend span { margin-left: 0; display: block; }
+  .vault-launch > .btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vault-rating[data-tier="aura"] .vault-rating__head { animation: none; }
+  .vault-door__wheel { transition: none; }
+  .vault[data-busy="true"] .vault-door__wheel { animation: none; }
+  .vault-cell::before { transition: none; }
+  .vault-phases li { transition: none; }
+}

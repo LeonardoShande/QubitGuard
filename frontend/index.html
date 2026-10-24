@@ -8,6 +8,7 @@
   <meta name="color-scheme" content="dark">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%2346d9e8' stroke-width='2.5'/%3E%3Ccircle cx='21' cy='11' r='3' fill='%23ea6bbd'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="assets/vault.css">
   <script type="module" src="dist/main.js"></script>
 </head>
 <body>
@@ -54,6 +55,7 @@ IIIIIIII  BBBBBBB   MM        MM</pre>
     </div>
     <nav class="nav" aria-label="Secciones">
       <ul class="nav__list wrap">
+        <li><a href="#boveda">Jugar: la bóveda</a></li>
         <li><a href="#problema">El problema</a></li>
         <li><a href="#ruta">Tu ruta</a></li>
         <li><a href="#reto">Reto diario</a></li>
@@ -80,6 +82,7 @@ IIIIIIII  BBBBBBB   MM        MM</pre>
         <div class="hero__actions">
           <a class="btn btn--primary" href="#laboratorio">Experimentar con Grover <span aria-hidden="true">↓</span></a>
           <a class="hero__route" href="#ruta">Seguir la ruta de aprendizaje</a>
+          <a class="hero__route" href="#boveda">Jugar a Protege la bóveda</a>
         </div>
         <p class="hero__scope">Desde 14 años · Simulación local · Sin cuenta IBM</p>
       </div>
@@ -104,6 +107,129 @@ IIIIIIII  BBBBBBB   MM        MM</pre>
         </dl>
         <p class="race__note" id="race-note"></p>
         <p class="race__disclaimer">Comparación teórica de consultas. No son tiempos medidos.</p>
+      </div>
+    </section>
+
+    <section class="section wrap vault" id="boveda" aria-labelledby="vault-heading">
+      <div class="vault-heading">
+        <div>
+          <h2 id="vault-heading">Protege la bóveda</h2>
+          <p class="section__sub">Tres misiones. Construye una clave ficticia, predice, experimenta con Qiskit y explica. Tu rango crece con lo que aprendes.</p>
+        </div>
+        <a href="#laboratorio">Abrir el laboratorio libre</a>
+      </div>
+      <noscript><p>Activa JavaScript para jugar. El laboratorio necesita el servidor local de QubitGuard.</p></noscript>
+      <div class="vault-shell">
+        <aside class="vault-profile" aria-label="Progreso de la bóveda">
+          <svg class="vault-door" viewBox="0 0 160 150" aria-hidden="true">
+            <rect x="18" y="10" width="124" height="126" rx="12"/>
+            <rect class="vault-door__inner" x="30" y="22" width="100" height="102" rx="5"/>
+            <path d="M26 43h15m-15 55h15m78-55h15m-15 55h15"/>
+            <g class="vault-door__wheel"><circle cx="80" cy="72" r="25"/><circle cx="80" cy="72" r="7"/><path d="M80 47v18m0 14v18m-25-25h18m14 0h18"/></g>
+            <path class="vault-door__bolt" d="M130 66h10v12h-10"/>
+          </svg>
+          <p class="vault-profile__state" id="vault-defense-state">Defensa en construcción</p>
+          <h3 id="vault-rank">Aprendiz de qubits</h3>
+          <p class="mono" id="vault-points">0 / 300 puntos</p>
+          <label class="visually-hidden" for="vault-progress">Puntos en la campaña de la bóveda</label>
+          <progress id="vault-progress" max="300" value="0"></progress>
+          <p id="vault-rank-hint">Completa tu primera misión.</p>
+          <details class="vault-rank-list"><summary>Ver puntos y rangos</summary><ol id="vault-ranks"></ol></details>
+          <p class="vault-small">El rango mide tu progreso educativo. No certifica la seguridad de una contraseña. Los puntos nuevos también suman al XP general.</p>
+          <div class="vault-save">
+            <p id="vault-save-status" class="vault-small" role="status">Comprobando el guardado en este navegador…</p>
+            <details>
+              <summary>¿Cómo conservo mis puntos?</summary>
+              <p>Vuelve con el mismo navegador y la misma dirección: tu XP, logros y misiones siguen aquí, aunque cambie el día. Solo se renuevan los retos y los límites diarios.</p>
+              <p>Si borras los datos del sitio, usas modo privado o cambias de navegador o dirección, el progreso puede no estar disponible. Descarga una copia para llevártelo y restaurarlo.</p>
+              <button class="btn btn--ghost" id="vault-export" type="button">Descargar mi progreso</button>
+              <button class="btn btn--ghost" id="vault-import" type="button">Restaurar una copia</button>
+              <input id="vault-import-file" type="file" accept="application/json,.json" aria-label="Archivo de progreso de QubitGuard" hidden>
+              <p class="vault-small">La copia contiene puntos y logros. Las contraseñas nunca se guardan.</p>
+            </details>
+            <p id="vault-backup-feedback" class="vault-small" role="status"></p>
+            <details id="vault-backup-text" hidden>
+              <summary>¿No apareció la descarga?</summary>
+              <p class="vault-small">Puedes copiar este texto y guardarlo como <span class="mono">qubitguard-progreso.json</span> en tu equipo. Después usa «Restaurar una copia».</p>
+              <label class="visually-hidden" for="vault-backup-json">Copia portable de tu progreso, sin contraseñas</label>
+              <textarea id="vault-backup-json" class="input mono" rows="6" readonly spellcheck="false"></textarea>
+            </details>
+          </div>
+        </aside>
+        <div class="vault-workspace">
+          <div class="vault-missions" id="vault-missions" aria-label="Elegir misión"></div>
+          <ol class="vault-phases" id="vault-phases" aria-hidden="true">
+            <li data-state="current">Preparar</li>
+            <li data-state="todo">Predecir</li>
+            <li data-state="todo">Observar</li>
+            <li data-state="todo">Explicar</li>
+          </ol>
+          <div class="vault-brief">
+            <h3 id="vault-title" tabindex="-1">Cierra la primera puerta</h3>
+            <p id="vault-story"></p>
+            <p><b id="vault-concept"></b> · <span class="mono" id="vault-model"></span></p>
+          </div>
+          <fieldset id="vault-prepare" class="vault-stage">
+            <legend>1. Construye tu defensa de práctica <span>25 puntos</span></legend>
+            <details class="vault-guide" open>
+              <summary>Cómo jugar con tu contraseña de práctica</summary>
+              <ol>
+                <li><b>Inventa una clave.</b> Usa al menos <span id="vault-length-goal">15</span> caracteres en esta misión. No escribas una contraseña personal.</li>
+                <li><b>Mejora la idea.</b> Evita nombres típicos, fechas, secuencias y repeticiones. Puedes crear un ejemplo aleatorio con el botón de abajo.</li>
+                <li><b>Predice, ejecuta y explica.</b> Tu clave prepara la misión; el tablero de Qiskit te enseña cómo cambian las probabilidades.</li>
+              </ol>
+              <p><b>Qué ganas:</b> 25 XP por preparar la clave, 25 por la predicción correcta, 20 por ejecutar y 30 por explicar. Se suman al terminar la misión; repetir solo suma si mejoras tu marca.</p>
+            </details>
+            <label for="vault-password">Clave ficticia de entrenamiento (visible)</label>
+            <input class="input mono" type="text" id="vault-password" maxlength="128" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="vault-password-hint">
+            <p class="hint" id="vault-password-hint">Escribe un ejemplo inventado. Se analiza aquí, se borra tras ejecutar y no se envía ni se guarda. No uses contraseñas personales.</p>
+            <button class="btn btn--ghost" id="vault-generate" type="button">Crear ejemplo aleatorio local</button>
+            <div class="vault-rating" id="vault-rating" data-tier="empty" aria-labelledby="vault-rating-title">
+              <div class="vault-rating__head"><h4 id="vault-rating-title">Tu clave empieza aquí</h4><span class="mono" id="vault-rating-score">0/100</span></div>
+              <label class="visually-hidden" for="vault-rating-meter">Puntuación de la clave de práctica, no XP</label>
+              <progress id="vault-rating-meter" max="100" value="0"></progress>
+              <p id="vault-rating-tip">Inventa un ejemplo o crea uno aleatorio para ver cómo mejora.</p>
+              <p class="vault-small">Esta etiqueta evalúa el ejemplo según el modelo del juego. No es XP ni una garantía de seguridad.</p>
+              <p id="vault-rating-live" class="visually-hidden" role="status" aria-live="polite"></p>
+            </div>
+            <ul class="vault-checks" id="vault-checks"></ul>
+            <p id="vault-prepare-points" class="vault-small">Cumple las tres metas para preparar tu misión.</p>
+            <details class="vault-guide vault-guide--technical">
+              <summary>¿Qué significan la puntuación y los bits?</summary>
+              <p>La puntuación de tu ejemplo va de 0 a 100: «Meh» (0–39), «Buena» (40–69), «Épica» (70–89) y «Nivel dios: tu clave tiene aura» (90–100). Más longitud y menos patrones ayudan; el juego también usa una estimación matemática limitada.</p>
+              <p>Los bits son una forma de expresar cuántas posibilidades considera ese modelo. No podemos saber la entropía real de una clave solo por verla. El juego no comprueba si apareció en una filtración.</p>
+              <p id="vault-technical-score"></p>
+              <p>Las metas son reglas de esta misión. Qiskit simula candidatos inventados: no analiza ni protege la contraseña escrita. Tu rango mide las misiones que entiendes, y el XP acumulado se guarda por separado.</p>
+            </details>
+          </fieldset>
+          <fieldset id="vault-predict" class="vault-stage">
+            <legend>2. Predice antes de medir <span>25 puntos</span></legend>
+            <p id="vault-prediction-question"></p>
+            <div id="vault-predictions" class="vault-choices"></div>
+          </fieldset>
+          <div class="vault-launch">
+            <button class="btn btn--primary" id="vault-run" type="button" disabled>Ejecutar experimento con Qiskit</button>
+            <span id="vault-run-hint">20 puntos al ejecutar y comparar</span>
+          </div>
+          <p class="state" id="vault-status" role="status" aria-live="polite"></p>
+          <details class="vault-model-note"><summary>¿Qué hace Qiskit con mi clave?</summary><p>No recibe la clave. Ejecuta Grover sobre un tablero sintético de 8 o 16 candidatos con un objetivo conocido. La clave de práctica enseña patrones y longitud; el tablero enseña probabilidades y amplitudes. No simula romper esa clave ni certifica su seguridad.</p></details>
+          <section class="vault-result" id="vault-result" hidden aria-labelledby="vault-result-heading">
+            <h3 id="vault-result-heading" tabindex="-1">3. Observa y explica</h3>
+            <p class="vault-small" id="vault-backend"></p>
+            <dl class="vault-measures"><div><dt>Probabilidad ideal del objetivo</dt><dd class="mono" id="vault-theory"></dd></div><div><dt>Frecuencia medida</dt><dd class="mono" id="vault-measured"></dd></div></dl>
+            <p class="vault-small">Cada celda muestra su frecuencia observada. El objetivo aparece resaltado; las frecuencias pueden variar por muestreo.</p>
+            <div class="vault-board" id="vault-board" role="list" aria-label="Frecuencias de los candidatos"></div>
+            <details><summary>Ver el circuito ejecutado</summary><pre id="vault-circuit" tabindex="0" aria-label="Circuito de Grover"></pre></details>
+            <fieldset class="vault-stage"><legend>Explica para completar la misión <span>30 puntos</span></legend><p id="vault-question"></p><div id="vault-answers" class="vault-choices"></div></fieldset>
+            <p id="vault-answer-feedback" role="status" aria-live="polite"></p>
+          </section>
+          <div class="vault-finish" id="vault-finish" hidden>
+            <h3 id="vault-score" tabindex="-1"></h3>
+            <p id="vault-breakdown"></p><p id="vault-prediction-feedback"></p>
+            <div class="vault-launch"><button type="button" class="btn btn--primary" id="vault-next">Siguiente misión</button><button type="button" class="btn btn--ghost" id="vault-replay">Repetir para practicar</button></div>
+            <a href="#amplitudes">Explorar el oráculo y el difusor paso a paso</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -133,8 +259,8 @@ IIIIIIII  BBBBBBB   MM        MM</pre>
         <article class="problem__card">
           <h3><span class="problem__tag mono">Evidencia</span>Qué sabemos y qué no</h3>
           <ul class="problem__evidence">
-            <li><span class="problem__ok" aria-hidden="true">✓</span><span>Medido: la curva de Qiskit <span class="mono">Statevector</span> coincide con <span class="mono">sin²((2k+1)θ)</span> de 2 a 6 qubits (error máximo 6·10⁻¹⁴), con pruebas automáticas.</span></li>
-            <li><span class="problem__todo" aria-hidden="true">○</span><span>Pendiente: aún no hemos hecho un piloto con estudiantes. No afirmamos mejoras de aprendizaje.</span></li>
+            <li><span class="problem__ok" aria-hidden="true">✓</span><p>Medido: la curva de Qiskit <code class="mono">Statevector</code> coincide con <code class="mono">sin²((2k+1)θ)</code> de 2 a 6 qubits (error máximo 6·10⁻¹⁴), con pruebas automáticas.</p></li>
+            <li><span class="problem__todo" aria-hidden="true">○</span><p>Pendiente: aún no hemos hecho un piloto con estudiantes. No afirmamos mejoras de aprendizaje.</p></li>
           </ul>
         </article>
       </div>

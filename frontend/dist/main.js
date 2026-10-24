@@ -6,6 +6,8 @@ import { formatPow10 } from "./password.js";
 import { initPasswordUI } from "./password-ui.js";
 import * as progress from "./progress.js";
 import { initAmbience } from "./ambience.js";
+import { initVaultUI } from "./vault-ui.js";
+import { initProgressUI } from "./progress-ui.js";
 // Utilidades -------------------------------------------------------------
 /** Segundos que pide esperar el servidor (Retry-After de un 503), o 0. */
 const retryWait = (err) => (err instanceof ApiError ? err.retryAfter : 0);
@@ -856,3 +858,5 @@ document.addEventListener("visibilitychange", () => {
 });
 void loadPqc();
 void loadLimitations();
+initVaultUI(player, (award) => { celebrate(award); renderHud(); });
+initProgressUI(player, () => { renderHud(); renderPath(); renderAchievements(); void loadChallenge(); });

@@ -1,6 +1,10 @@
 // Progreso del jugador (XP, nivel, racha) guardado en este navegador.
 
+import { MISSIONS, missionUnlocked, normalizeVault, type MissionId } from "./vault-model.js";
+
 const KEY = "qubitguard.progress.v1";
+const BACKUP_KEY = `${KEY}.backup`;
+let storageState: "saved" | "recovered" | "blocked" = "saved";
 
 export interface Progress {
   xp: number;
@@ -18,11 +22,13 @@ export interface Progress {
   achievements: AchievementId[];
   /** Predicciones puntuadas hoy, para que la XP no se compre repitiendo. */
   predictions: { date: string; count: number };
+  /** Mejores puntos de misiones educativas; nunca texto de contraseñas. */
+  vault: Partial<Record<MissionId, number>>;
 }
 
 const EMPTY: Progress = {
   xp: 0, streak: 0, bestStreak: 0, lastChallengeDate: null, answers: {}, activity: {},
-  path: [], achievements: [], predictions: { date: "", count: 0 },
+  path: [], achievements: [], predictions: { date: "", count: 0 }, vault: {},
 };
 
 export type StepId = "superposicion" | "oraculo" | "amplificacion" | "ruido" | "criptografia";
@@ -58,12 +64,14 @@ export const LEVEL_NAMES = [
   "Guardián cuántico",
 ];
 
-export function load(): Progress {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return structuredClone(EMPTY);
-    const data = JSON.parse(raw) as Partial<Progress>;
-    const p = { ...structuredClone(EMPTY), ...data };
+function normalizeProgress(value: unknown): Progress {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return structuredClone(EMPTY);
+    const data = value as Partial<Progress>;
+    // Construir desde campos conocidos evita conservar información ajena al progreso.
+    const p: Progress = { ...structuredClone(EMPTY), xp: data.xp ?? 0, streak: data.streak ?? 0,
+      bestStreak: data.bestStreak ?? 0, lastChallengeDate: data.lastChallengeDate ?? null,
+      answers: data.answers ?? {}, activity: data.activity ?? {}, path: data.path ?? [],
+      achievements: data.achievements ?? [], predictions: data.predictions ?? { date: "", count: 0 }, vault: data.vault ?? {} };
     // Datos de una versión anterior o editados a mano: se normalizan en vez de romper la página.
     if (!Array.isArray(p.path)) p.path = [];
     if (!Array.isArray(p.achievements)) p.achievements = [];
@@ -75,17 +83,95 @@ export function load(): Progress {
     p.bestStreak = count(p.bestStreak);
     p.answers = dict(p.answers) as Progress["answers"];
     p.activity = dict(p.activity) as Progress["activity"];
-    if (typeof p.lastChallengeDate !== "string") p.lastChallengeDate = null;
+    const isDate = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`));
+    p.answers = Object.fromEntries(Object.entries(p.answers).filter(([day, answer]) => isDate(day) && answer &&
+      Number.isInteger(answer.choice) && answer.choice >= 0 && answer.choice <= 3 && typeof answer.correct === "boolean")
+      .sort(([a], [b]) => a.localeCompare(b)).slice(-60).map(([day, answer]) => [day, { choice: answer.choice, correct: answer.correct }]));
+    p.activity = Object.fromEntries(Object.entries(p.activity).filter(([key, day]) => ["grover", "grover-noisy", "montecarlo"].includes(key) && isDate(day)));
+    p.path = p.path.filter((id) => STEPS.some((step) => step.id === id));
+    p.achievements = p.achievements.filter((id) => ACHIEVEMENTS.some((achievement) => achievement.id === id));
+    p.predictions = { date: isDate(p.predictions.date) ? p.predictions.date : "", count: Math.min(5, count(p.predictions.count)) };
+    p.vault = normalizeVault(p.vault);
+    p.xp = Math.max(p.xp, Object.values(p.vault).reduce((sum, n) => sum + n, 0));
+    if (!isDate(p.lastChallengeDate)) p.lastChallengeDate = null;
     return p;
-  } catch {
-    return structuredClone(EMPTY);
+}
+
+export function load(): Progress {
+  storageState = "saved";
+  try {
+    for (const key of [KEY, BACKUP_KEY]) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const data: unknown = JSON.parse(raw);
+        if (!data || typeof data !== "object" || Array.isArray(data)) continue;
+        if (key === BACKUP_KEY) storageState = "recovered";
+        return normalizeProgress(data);
+      } catch { /* La copia redundante permite recuperar un JSON principal dañado. */ }
+    }
+  } catch { storageState = "blocked"; }
+  return structuredClone(EMPTY);
+}
+
+export function storageStatus(): "saved" | "recovered" | "blocked" {
+  return storageState;
+}
+
+/** Prueba de escritura al abrir la UI. No toca puntuaciones ni cuenta como actividad. */
+export function checkStorage(): void {
+  const probe = `${KEY}.probe`;
+  try {
+    localStorage.setItem(probe, "1");
+    localStorage.removeItem(probe);
+    if (storageState !== "recovered") storageState = "saved";
+  } catch { storageState = "blocked"; }
+}
+
+/** Copia portable con campos permitidos. Las contraseñas no forman parte de Progress. */
+export function exportProgress(p: Progress): string {
+  return JSON.stringify({ app: "QubitGuard", version: 1, progress: normalizeProgress(p) }, null, 2);
+}
+
+export function importProgress(p: Progress, source: string): void {
+  if (source.length > 131072) throw new Error("La copia es demasiado grande. Elige un archivo de progreso de QubitGuard.");
+  let data: { app?: unknown; version?: unknown; progress?: unknown };
+  try { data = JSON.parse(source); } catch { throw new Error("El archivo no contiene una copia JSON válida."); }
+  if (!data || data.app !== "QubitGuard" || data.version !== 1 || !data.progress || typeof data.progress !== "object" || Array.isArray(data.progress)) {
+    throw new Error("Esta copia no tiene el formato de progreso de QubitGuard.");
   }
+  const incoming = normalizeProgress(data.progress);
+  // Restaurar suma lo recuperable y nunca reduce XP, mejores marcas ni logros actuales.
+  const vault = normalizeVault(Object.fromEntries(MISSIONS.map(({ id }) => [id, Math.max(p.vault?.[id] ?? 0, incoming.vault[id] ?? 0)])));
+  const existingVaultXp = Object.values(p.vault ?? {}).reduce((sum, n) => sum + n, 0);
+  const incomingVaultXp = Object.values(incoming.vault).reduce((sum, n) => sum + n, 0);
+  p.xp = Math.max(p.xp - existingVaultXp, incoming.xp - incomingVaultXp, 0) + Object.values(vault).reduce((sum, n) => sum + n, 0);
+  p.vault = vault;
+  p.path = [...new Set([...p.path, ...incoming.path])];
+  p.achievements = [...new Set([...p.achievements, ...incoming.achievements])];
+  // Si ambas copias contienen la fecha, conserva la respuesta local ya puntuada.
+  p.answers = { ...incoming.answers, ...p.answers };
+  for (const [key, date] of Object.entries(incoming.activity)) if (!p.activity[key] || date > p.activity[key]) p.activity[key] = date;
+  p.bestStreak = Math.max(p.bestStreak, incoming.bestStreak);
+  if (incoming.lastChallengeDate && (!p.lastChallengeDate || incoming.lastChallengeDate > p.lastChallengeDate)) {
+    p.lastChallengeDate = incoming.lastChallengeDate;
+    p.streak = incoming.streak;
+  }
+  if (incoming.predictions.date > p.predictions.date) p.predictions = incoming.predictions;
+  else if (incoming.predictions.date === p.predictions.date) p.predictions.count = Math.max(p.predictions.count, incoming.predictions.count);
+  save(p);
 }
 
 function save(p: Progress): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(p));
-  } catch { /* modo privado o almacenamiento bloqueado: el progreso vive solo en esta pestaña */ }
+    const serialized = JSON.stringify(normalizeProgress(p));
+    localStorage.setItem(KEY, serialized);
+    storageState = "saved";
+    try { localStorage.setItem(BACKUP_KEY, serialized); } catch { /* El guardado principal sigue siendo válido. */ }
+  } catch { storageState = "blocked"; }
+  if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+    window.dispatchEvent(new Event("qubitguard:progress-saved"));
+  }
 }
 
 /** Fecha LOCAL del navegador (AAAA-MM-DD): el reto, la racha y los topes diarios cambian a medianoche local. */
@@ -173,4 +259,17 @@ export function rewardActivity(p: Progress, activity: string, xp: number, reason
   p.xp += xp;
   save(p);
   return { xp, reason };
+}
+
+/** Solo la mejora sobre la mejor marca da XP. No altera las rachas ni los topes anteriores. */
+export function awardVaultMission(p: Progress, id: MissionId, score: number): Award | null {
+  p.vault = normalizeVault(p.vault);
+  const index = MISSIONS.findIndex((mission) => mission.id === id);
+  if (!missionUnlocked(index, p.vault) || (score !== 75 && score !== 100)) return null;
+  const delta = score - (p.vault[id] ?? 0);
+  if (delta <= 0) return null;
+  p.vault[id] = score;
+  p.xp += delta;
+  save(p);
+  return { xp: delta, reason: "Mejor marca en Protege la bóveda" };
 }

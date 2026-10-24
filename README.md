@@ -6,7 +6,7 @@ QubitGuard compara la búsqueda clásica de un secreto con el algoritmo de Grove
 
 **Todos los circuitos se ejecutan en simuladores locales.** No se necesita cuenta de IBM Quantum, token, hardware cuántico ni base de datos. El proyecto es una herramienta didáctica; no ejecuta ataques contra sistemas reales.
 
-> Este README describe la versión de la rama [`feat/edtech-lab`](https://github.com/LeonardoShande/QubitGuard/tree/feat/edtech-lab). Los comandos de clonación seleccionan esa rama porque `main` conserva una estructura anterior.
+El laboratorio se integró en `main` mediante el [PR #1](https://github.com/LeonardoShande/QubitGuard/pull/1). La [guía del código](docs/GUIA_DEL_CODIGO.md) explica sus módulos, y la [revisión frente al prompt y las bases](docs/REVISION_PROMPT_Y_BASES.md) compara lo implementado con el encargo y prioriza mejoras.
 
 ## Contenido
 
@@ -54,11 +54,11 @@ El frontend está escrito en TypeScript sin frameworks ni dependencias de ejecuc
 ### 1. Clonar esta versión
 
 ```bash
-git clone --branch feat/edtech-lab https://github.com/LeonardoShande/QubitGuard.git
+git clone https://github.com/LeonardoShande/QubitGuard.git
 cd QubitGuard
 ```
 
-Si ya tienes el repositorio, comprueba la rama con `git branch --show-current`. Guarda tus cambios antes de cambiar de rama.
+Si ya tienes el repositorio, comprueba la rama con `git branch --show-current`. La versión integrada está en `main`; guarda tus cambios antes de cambiar de rama y actualizarla.
 
 ### 2. Crear el entorno e instalar dependencias
 
@@ -324,7 +324,7 @@ Consulta [docs/DEPLOY.md](docs/DEPLOY.md) para la propuesta de despliegue con Cl
 |---|---|
 | `No module named uvicorn`, `qiskit` o `app` | Activa el entorno, instala `requirements.txt` con ese mismo Python y ejecuta el comando desde la raíz del repositorio. |
 | Falla la instalación de Qiskit Aer | Comprueba la versión y arquitectura de Python y actualiza pip. Aer incluye componentes nativos; revisa el error de compatibilidad antes de intentar compilarlo. |
-| La página abre sin la funcionalidad esperada | Comprueba que estás en `feat/edtech-lab`, que existen los archivos de `frontend/dist/` y, si editaste TypeScript, ejecuta `npm ci` y `npm run build`. |
+| La página abre sin la funcionalidad esperada | Comprueba que tienes `main` actualizado, que existen los archivos de `frontend/dist/` y, si editaste TypeScript, ejecuta `npm ci` y `npm run build`. |
 | El navegador no encuentra el backend | Abre la URL de Uvicorn. No abras `frontend/index.html` como `file://`; la API usa rutas del mismo origen. |
 | Puerto 8000 ocupado | Usa `--port 8001` y abre `http://127.0.0.1:8001`; ajusta también los ejemplos y el túnel. |
 | Respuesta 422 | Revisa rangos, longitud binaria del estado, formato de fecha y campos adicionales del JSON. |
@@ -353,6 +353,8 @@ Antes de proponer cambios, revisa el contrato de API y ejecuta las comprobacione
 | Documento | Contenido |
 |---|---|
 | [Arquitectura](docs/architecture.md) | Capas, flujo, cachés y decisiones técnicas. |
+| [Guía del código](docs/GUIA_DEL_CODIGO.md) | Funcionamiento por módulos, funciones, privacidad y mantenimiento. |
+| [Revisión del prompt y las bases](docs/REVISION_PROMPT_Y_BASES.md) | Comparación del encargo con el resultado, rúbrica y mejoras priorizadas. |
 | [Contrato de API](docs/API.md) | Cuerpos, respuestas y convenciones. |
 | [Despliegue](docs/DEPLOY.md) | Demo pública y configuración de publicación. |
 | [Limitaciones](docs/LIMITACIONES.md) | Alcance educativo y supuestos. |

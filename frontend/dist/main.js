@@ -1,6 +1,7 @@
 import { api, ApiError, describeError } from "./api.js";
 import { barChart, lineChart, mount, unmount } from "./charts.js";
-import { $, fieldError, h, motion } from "./dom.js";
+import { $, countTo, fieldError, h, initReveal, motion } from "./dom.js";
+import { initExplorer, optimalIterations, theoreticalSuccess } from "./explorer.js";
 import { formatPow10 } from "./password.js";
 import { initPasswordUI } from "./password-ui.js";
 import * as progress from "./progress.js";
@@ -16,13 +17,17 @@ const retryButtons = new WeakMap();
  */
 function setState(node, message, retry, err) {
     node.classList.toggle("is-error", Boolean(retry));
+    const changed = node.textContent !== message;
     node.replaceChildren(message);
+    if (changed && message)
+        motion(node, [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], 200);
     retryButtons.get(node)?.remove();
     if (!retry)
         return;
     const btn = h("button", { type: "button", class: "btn btn--ghost btn--sm retry" }, "Reintentar");
     btn.addEventListener("click", () => { btn.remove(); retry(); });
     node.after(btn);
+    motion(btn, [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }], 200, 60);
     retryButtons.set(node, btn);
     let wait = retryWait(err);
     const tick = () => {
@@ -75,8 +80,6 @@ function focusFirstInvalid(form) {
 function fillTable(id, rows) {
     $(id).querySelector("tbody").replaceChildren(...rows.map((r) => h("tr", {}, ...r.map((c) => h("td", {}, c)))));
 }
-const optimalIterations = (n) => Math.floor(Math.PI / (4 * Math.asin(1 / Math.sqrt(2 ** n))));
-const theoreticalSuccess = (n, k) => Math.sin((2 * k + 1) * Math.asin(1 / Math.sqrt(2 ** n))) ** 2;
 /** Entero uniforme en [0, 2^bits) con crypto.getRandomValues. 2^32 es múltiplo de 2^bits: sin sesgo. */
 function randomBits(bits) {
     const sample = new Uint32Array(1);
@@ -87,12 +90,13 @@ function randomBits(bits) {
 const player = progress.load();
 const toastEl = $("toast");
 let toastTimer = 0;
-function renderHud() {
+/** `animate` en false para la primera pintura: las cifras ya guardadas no cuentan desde 0. */
+function renderHud(animate = true) {
     const info = progress.levelInfo(player.xp);
     const streak = progress.currentStreak(player);
     $("hud-level").textContent = String(info.level);
     $("hud-name").textContent = info.name;
-    $("hud-xp").textContent = player.xp.toLocaleString("es-PE");
+    countTo($("hud-xp"), player.xp, (v) => Math.round(v).toLocaleString("es-PE"), animate);
     $("hud-streak").textContent = String(streak);
     $("hud-streak-unit").textContent = streak === 1 ? "día" : "días";
     $("hud-xpfill").style.transform = `scaleX(${info.fraction})`;
@@ -101,7 +105,7 @@ function renderHud() {
     bar.setAttribute("aria-valuetext", `${player.xp} de ${info.next} XP para el nivel ${info.level + 1}`);
     $("stat-streak").textContent = String(streak);
     $("stat-best").textContent = String(player.bestStreak);
-    $("stat-xp").textContent = player.xp.toLocaleString("es-PE");
+    countTo($("stat-xp"), player.xp, (v) => Math.round(v).toLocaleString("es-PE"), animate);
     $("stat-next").textContent = `${(info.next - player.xp).toLocaleString("es-PE")} XP`;
 }
 /** Aviso breve. Si ya hay uno visible, la línea nueva se suma en vez de pisarlo. */
@@ -290,6 +294,7 @@ function initLab() {
     const state = $("lab-state");
     const predProb = $("pred-prob");
     const predIter = $("pred-iter");
+    const out = form.nextElementSibling;
     let lastRunIterations = null;
     /** Guarda contra doble envío: Enter en un campo dispara submit aunque el botón esté deshabilitado. */
     let running = false;
@@ -437,6 +442,7 @@ function initLab() {
         const id = ++runId;
         let failure = null;
         setBusy(run, true, "Ejecutando…");
+        out.classList.add("is-stale");
         setState(state, noisy.checked ? "Transpilando para FakeFez y simulando con ruido…" : "Simulando el circuito ideal…");
         try {
             const r = await api.grover({
@@ -463,6 +469,7 @@ function initLab() {
             setState(state, describeError(err), () => form.requestSubmit(), err);
         }
         finally {
+            out.classList.remove("is-stale");
             release(run, "Ejecutar circuito", failure, () => { running = false; });
         }
     });
@@ -488,11 +495,12 @@ function renderResult(r) {
     $("lab-hist-data").hidden = false;
     $("lab-hist-note").textContent =
         `${r.marked_state} apareció ${(values[hi] ?? 0).toLocaleString("es-PE")} de ${r.shots.toLocaleString("es-PE")} veces. Al azar esperarías ${pct(1 / labels.length)}.`;
-    $("m-measured").textContent = pct(r.measured_success);
-    $("m-theory").textContent = pct(r.theoretical_success);
+    const int = (v) => Math.round(v).toLocaleString("es-PE");
+    countTo($("m-measured"), r.measured_success, pct);
+    countTo($("m-theory"), r.theoretical_success, pct);
     $("m-iters").textContent = `${r.iterations} (${r.optimal_iterations})`;
-    $("m-depth").textContent = r.depth.toLocaleString("es-PE");
-    $("m-2q").textContent = r.two_qubit_gates.toLocaleString("es-PE");
+    countTo($("m-depth"), r.depth, int);
+    countTo($("m-2q"), r.two_qubit_gates, int);
     $("m-backend").textContent = r.backend;
     $("lab-circuit").textContent = r.circuit_text;
 }
@@ -501,7 +509,11 @@ function observe(r, p) {
     const N = 2 ** r.n_qubits;
     const k = r.iterations;
     const opt = r.optimal_iterations;
-    $("ppo").hidden = false;
+    const ppo = $("ppo");
+    if (ppo.hidden) {
+        ppo.hidden = false;
+        motion(ppo, [{ opacity: 0, transform: "translateY(10px) scale(0.98)" }, { opacity: 1, transform: "none" }], 320);
+    }
     let score;
     let xp = 0;
     let exact = false;
@@ -532,8 +544,14 @@ function observe(r, p) {
         $("ppo-scale-max").textContent = `${max} it.`;
         placeMarkers(scale, p.value / max, opt / max, k / max, true);
     }
-    $("ppo-theory").textContent = p.mode === "prob" ? pct(r.theoretical_success) : `${opt} it.`;
-    $("ppo-measured").textContent = p.mode === "prob" ? pct(r.measured_success) : `${k} it. → ${pct(r.measured_success)}`;
+    if (p.mode === "prob") {
+        countTo($("ppo-theory"), r.theoretical_success, pct);
+        countTo($("ppo-measured"), r.measured_success, pct);
+    }
+    else {
+        countTo($("ppo-theory"), opt, (v) => `${Math.round(v)} it.`);
+        countTo($("ppo-measured"), r.measured_success, (v) => `${k} it. → ${pct(v)}`);
+    }
     $("ppo-theory-k").textContent = p.mode === "prob" ? "Teoría" : "Óptimo";
     $("ppo-measured-k").textContent = p.mode === "prob" ? "Medido" : "Ejecutaste";
     const award = progress.rewardPrediction(player, xp, exact ? "Predicción exacta" : "Predicción cercana");
@@ -542,6 +560,7 @@ function observe(r, p) {
     $("ppo-explain").replaceChildren(...explain(r).map((t) => h("li", {}, t)));
     celebrate(award);
     unlock("prediccion");
+    explorer.unlock();
     if (exact)
         unlock("prediccion-exacta");
     const said = p.mode === "prob" ? pct(p.value) : `${p.value} iteraciones`;
@@ -612,6 +631,19 @@ function initMonteCarlo() {
     const run = $("mc-run");
     const state = $("mc-state");
     let running = false;
+    // Vista previa local y en vivo: lo que la teoría espera antes de simular.
+    const preview = () => {
+        const b = Number(bitsInput.value);
+        if (!Number.isInteger(b) || b < 2 || b > 20) {
+            $("mc-preview").textContent = "";
+            return;
+        }
+        const N = 2 ** b;
+        $("mc-preview").textContent =
+            `N = ${fmtBig(N)}: al azar esperas ${fmtBig((N + 1) / 2)} intentos; Grover, unas ${Math.max(1, optimalIterations(b))} iteraciones.`;
+    };
+    bitsInput.addEventListener("input", preview);
+    preview();
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
         if (running)
@@ -625,6 +657,7 @@ function initMonteCarlo() {
         running = true;
         let failure = null;
         setBusy(run, true, "Simulando…");
+        $("mc-hist").classList.add("is-stale");
         setState(state, "Buscando secretos al azar…");
         try {
             const r = await api.monteCarlo(bits, trials);
@@ -654,8 +687,8 @@ function initMonteCarlo() {
             });
             fillTable("mc-table", bins.map((b, i) => [width === 1 ? String(b) : `${b}–${b + width - 1}`, (counts[i] ?? 0).toLocaleString("es-PE")]));
             $("mc-data").hidden = false;
-            $("mc-mean").textContent = fmtBig(r.mean_attempts);
-            $("mc-exp").textContent = fmtBig(r.expected_attempts);
+            countTo($("mc-mean"), r.mean_attempts, fmtBig);
+            countTo($("mc-exp"), r.expected_attempts, fmtBig);
             $("mc-legend").hidden = false;
             const grover = Math.max(1, optimalIterations(r.n_bits));
             setState(state, `Con N = ${fmtBig(r.N)}, la media salió ${fmtBig(r.mean_attempts)} intentos frente a ${fmtBig(r.expected_attempts)} esperados. Grover necesitaría unas ${grover} iteraciones.`);
@@ -666,6 +699,7 @@ function initMonteCarlo() {
             setState(state, describeError(err), () => form.requestSubmit(), err);
         }
         finally {
+            $("mc-hist").classList.remove("is-stale");
             release(run, "Simular", failure, () => { running = false; });
         }
     });
@@ -676,31 +710,47 @@ function initCompare() {
     const run = $("cmp-run");
     const state = $("cmp-state");
     let running = false;
-    const load = async () => {
-        if (running)
-            return;
-        const max = intIn(maxInput, 2, 256, "Escribe un entero entre 2 y 256.");
-        if (max === null) {
-            maxInput.focus();
+    let again = false;
+    let shown = 0;
+    let timer = 0;
+    const load = async (fromTyping = false) => {
+        if (running) {
+            again = true;
             return;
         }
+        const max = intIn(maxInput, 2, 256, "Escribe un entero entre 2 y 256.");
+        if (max === null) {
+            if (!fromTyping)
+                maxInput.focus();
+            return;
+        }
+        if (fromTyping && max === shown)
+            return;
         running = true;
         setBusy(run, true, "Cargando…");
-        setState(state, "Cargando la comparación…");
+        $("cmp-chart").classList.add("is-stale");
         try {
             const { rows } = await api.compare(max);
             renderCompare(rows);
+            shown = max;
             state.replaceChildren();
         }
         catch (err) {
-            setState(state, describeError(err), load, err);
+            setState(state, describeError(err), () => void load(), err);
         }
         finally {
+            $("cmp-chart").classList.remove("is-stale");
             setBusy(run, false, "Actualizar");
             running = false;
+            if (again) {
+                again = false;
+                void load(true);
+            }
         }
     };
     form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
+    // Reacciona mientras escribes: espera 300 ms de calma y reutiliza la caché de api.ts.
+    maxInput.addEventListener("input", () => { clearTimeout(timer); timer = window.setTimeout(() => void load(true), 300); });
     void load();
 }
 function renderCompare(rows) {
@@ -780,12 +830,14 @@ function initNav() {
     sections.forEach((s) => io.observe(s));
 }
 initAmbience();
-renderHud();
+initReveal();
+renderHud(false);
 renderPath();
 renderAchievements();
 initRace();
 initNav();
 initLab();
+const explorer = initExplorer(player.achievements.includes("prediccion"));
 initMonteCarlo();
 initCompare();
 initPasswordUI({

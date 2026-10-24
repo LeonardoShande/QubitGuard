@@ -54,8 +54,10 @@ function decodeIntro(letters) {
     const pending = [];
     rows.forEach((row, r) => {
         const wrap = document.createElement("span");
-        // Filas alternas más tenues: las franjas horizontales de la marca IBM.
+        // Filas alternas más tenues: las franjas horizontales de la marca IBM. --r escalona el
+        // barrido de luz por fila (styles.css), que refuerza esas franjas.
         wrap.className = r % 2 ? "intro__row intro__row--alt" : "intro__row";
+        wrap.style.setProperty("--r", String(r));
         [...row].forEach((c, i) => {
             const ch = document.createElement("span");
             ch.className = "intro__ch";
@@ -138,6 +140,8 @@ export function initAmbience() {
         stopDecode = decodeIntro(letters);
     intro.addEventListener("animationend", (event) => { if (event.target === intro)
         finish(); });
+    // Saltable con un toque o clic: la capa recibe el clic, así no llega a un control invisible debajo.
+    intro.addEventListener("click", finish);
     document.addEventListener("keydown", skip);
     if (reduced.matches)
         finish();

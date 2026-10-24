@@ -18,16 +18,17 @@
   </div>
   <div class="ibm-intro" id="ibm-intro" aria-hidden="true">
     <div class="ibm-intro__content">
-      <pre class="ibm-intro__letters">IIIIIIII  BBBBBBB   MMM    MMM
-   II     BB    BB  MMMM  MMMM
-   II     BB    BB  MM MMMM MM
-   II     BBBBBBB   MM  MM  MM
-   II     BB    BB  MM      MM
-   II     BB    BB  MM      MM
-   II     BB    BB  MM      MM
-IIIIIIII  BBBBBBB   MM      MM</pre>
+      <pre class="ibm-intro__letters">IIIIIIII  BBBBBBB   MMM      MMM
+   II     BB    BB  MMMM    MMMM
+   II     BB    BB  MM MM  MM MM
+   II     BBBBBBB   MM  MMMM  MM
+   II     BBBBBBB   MM   MM   MM
+   II     BB    BB  MM        MM
+   II     BB    BB  MM        MM
+IIIIIIII  BBBBBBB   MM        MM</pre>
       <p class="ibm-intro__qiskit mono">Qiskit / Quantum Lab</p>
       <p>Proyecto para IBM Quantum Hackathon · Lima 2026</p>
+      <p class="ibm-intro__skip mono">Toca o pulsa Esc para saltar</p>
     </div>
   </div>
   <a class="skip" href="#contenido">Saltar al contenido</a>
@@ -53,9 +54,11 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
     </div>
     <nav class="nav" aria-label="Secciones">
       <ul class="nav__list wrap">
+        <li><a href="#problema">El problema</a></li>
         <li><a href="#ruta">Tu ruta</a></li>
         <li><a href="#reto">Reto diario</a></li>
         <li><a href="#laboratorio">Laboratorio Grover</a></li>
+        <li><a href="#amplitudes">Amplitudes</a></li>
         <li><a href="#azar">Azar frente a Grover</a></li>
         <li><a href="#contrasena">Tu contraseña</a></li>
         <li><a href="#poscuantica">Poscuántica</a></li>
@@ -104,7 +107,40 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
       </div>
     </section>
 
-    <section class="section wrap" id="ruta" aria-labelledby="ruta-title">
+    <section class="section wrap problem" id="problema" aria-labelledby="problema-title" data-reveal>
+      <div class="section__head">
+        <p class="kicker mono">02 / Problema y solución</p>
+        <h2 id="problema-title">El problema que resolvemos</h2>
+      </div>
+      <div class="problem__grid">
+        <article class="problem__card problem__card--lead">
+          <h3><span class="problem__tag mono">Problema</span>La probabilidad cuántica no se deja intuir</h3>
+          <p>Las amplitudes pueden ser negativas y se cancelan: nada en la estadística escolar lo anticipa. A la vez, la amenaza cuántica a la criptografía suele contarse con alarmismo («romperá todas las contraseñas») o con fórmulas que nadie comprueba.</p>
+        </article>
+        <article class="problem__card">
+          <h3><span class="problem__tag mono">Para quién</span>Estudiantes desde 14 años</h3>
+          <p>Unos 3 minutos al día: un reto diario, una predicción y un experimento. Sin cuenta IBM, sin instalar nada.</p>
+        </article>
+        <article class="problem__card problem__card--wide">
+          <h3><span class="problem__tag mono">Solución</span>Aprender midiendo, no memorizando</h3>
+          <ol class="problem__loop">
+            <li><b>Predice</b> la probabilidad o las iteraciones.</li>
+            <li><b>Ejecuta</b> un circuito real de Qiskit en el simulador.</li>
+            <li><b>Compara</b> teoría, medida y ruido de FakeFez.</li>
+            <li><b>Practica</b> cada día con reto, racha y logros.</li>
+          </ol>
+        </article>
+        <article class="problem__card">
+          <h3><span class="problem__tag mono">Evidencia</span>Qué sabemos y qué no</h3>
+          <ul class="problem__evidence">
+            <li><span class="problem__ok" aria-hidden="true">✓</span> Medido: la curva de Qiskit <span class="mono">Statevector</span> coincide con <span class="mono">sin²((2k+1)θ)</span> de 2 a 6 qubits (error máximo 6·10⁻¹⁴), con pruebas automáticas.</li>
+            <li><span class="problem__todo" aria-hidden="true">○</span> Pendiente: aún no hemos hecho un piloto con estudiantes. No afirmamos mejoras de aprendizaje.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section wrap" id="ruta" data-reveal aria-labelledby="ruta-title">
       <div class="section__head">
         <h2 id="ruta-title">Tu ruta de aprendizaje</h2>
         <p class="section__sub">Cinco pasos, de la superposición a la criptografía. Cada botón deja el laboratorio listo; tú predices y ejecutas. <span class="mono" id="path-count">0 de 5 pasos completados</span></p>
@@ -118,7 +154,7 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
       </div>
     </section>
 
-    <section class="section wrap" id="reto" aria-labelledby="reto-title">
+    <section class="section wrap" id="reto" data-reveal aria-labelledby="reto-title">
       <div class="section__head">
         <h2 id="reto-title">Reto diario</h2>
         <p class="section__sub">Una pregunta nueva cada día, a medianoche de tu hora local. Acertar da 50 XP y mantener la racha suma un extra.</p>
@@ -140,7 +176,7 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
       </div>
     </section>
 
-    <section class="section wrap" id="laboratorio" aria-labelledby="lab-title">
+    <section class="section wrap" id="laboratorio" data-reveal aria-labelledby="lab-title">
       <div class="section__head">
         <h2 id="lab-title">Laboratorio Grover</h2>
         <p class="section__sub">Elige cuántos qubits usar y qué estado esconder. Antes de ejecutar, predice qué va a pasar; Qiskit construye el oráculo, aplica las iteraciones y mide.</p>
@@ -270,7 +306,86 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
       </div>
     </section>
 
-    <section class="section wrap" id="azar" aria-labelledby="azar-title">
+    <section class="section wrap" id="amplitudes" aria-labelledby="amp-title" data-reveal>
+      <div class="section__head">
+        <p class="kicker mono">Distribución de probabilidad → amplitudes</p>
+        <h2 id="amp-title">Explorador de amplitudes</h2>
+        <p class="section__sub">Mueve los controles y mira en tiempo real cómo Grover cambia las probabilidades. Se calcula en tu navegador con fórmulas exactas, sin servidor.</p>
+      </div>
+      <dl class="amp-map">
+        <div><dt>Estadística</dt><dd>Cada resultado tiene una probabilidad <span class="mono">p ≥ 0</span> y todas suman 1.</dd></div>
+        <div><dt>Cuántica</dt><dd>Cada estado tiene una amplitud <span class="mono">a</span>, que puede ser negativa. La probabilidad es <span class="mono">a²</span>.</dd></div>
+        <div><dt>Grover</dt><dd>El oráculo cambia el signo del marcado; el difusor refleja todo respecto a la media. Lo que quedó por debajo sube: es girar la flecha <span class="mono">2θ</span> hacia <span class="mono">|ω⟩</span>.</dd></div>
+      </dl>
+      <div class="panel amp-gate" id="amp-gate">
+        <p><b>Primero, predice.</b> El explorador enseña la respuesta exacta para cualquier número de iteraciones. Si antes haces una predicción en el laboratorio, la comparación te dirá mucho más.</p>
+        <div class="amp-gate__actions">
+          <a class="btn btn--primary" href="#laboratorio">Ir a predecir</a>
+          <button class="btn btn--ghost" type="button" id="amp-open">Explorar sin predecir</button>
+        </div>
+      </div>
+      <div class="amp" id="amp-body" hidden>
+        <div class="panel amp__controls">
+          <div class="field">
+            <label for="amp-n">Qubits <output class="mono" id="amp-n-out" for="amp-n">4</output></label>
+            <input class="range" type="range" id="amp-n" min="2" max="10" step="1" value="4" aria-describedby="amp-n-hint">
+            <p class="hint" id="amp-n-hint">N = <span class="mono" id="amp-N">16</span> estados · θ = <span class="mono" id="amp-theta">—</span></p>
+          </div>
+          <div class="field">
+            <label for="amp-k">Iteraciones <output class="mono" id="amp-k-out" for="amp-k">0</output></label>
+            <input class="range" type="range" id="amp-k" min="0" max="8" step="1" value="0" aria-describedby="amp-k-hint">
+            <p class="hint" id="amp-k-hint">Óptimo: <span class="mono" id="amp-opt">3</span>. <span id="amp-verdict"></span></p>
+          </div>
+          <div class="amp__actions">
+            <button class="btn btn--primary" type="button" id="amp-step">Siguiente iteración</button>
+            <button class="btn btn--ghost" type="button" id="amp-reset">Volver a k = 0</button>
+          </div>
+          <p class="amp__phase mono" id="amp-phase" aria-hidden="true"></p>
+          <dl class="amp__read">
+            <div class="amp__row amp__row--q">
+              <dt>Grover <span class="mono">sin²((2k+1)θ)</span></dt>
+              <dd class="mono" id="amp-p">—</dd>
+              <span class="amp__track" aria-hidden="true"><span class="amp__fill" id="amp-fill-g"></span></span>
+            </div>
+            <div class="amp__row amp__row--c">
+              <dt>Al azar con k consultas <span class="mono">k/N</span></dt>
+              <dd class="mono" id="amp-r">—</dd>
+              <span class="amp__track" aria-hidden="true"><span class="amp__fill" id="amp-fill-r"></span></span>
+            </div>
+          </dl>
+          <p class="visually-hidden" id="amp-live" aria-live="polite"></p>
+        </div>
+        <figure class="panel figure amp__fig">
+          <figcaption>Amplitudes: el marcado <span class="mono">ω</span> frente al resto, con la media</figcaption>
+          <div class="amp__plot" id="amp-bars" aria-hidden="true">
+            <span class="amp__zero"></span>
+            <span class="amp__mean" id="amp-mean"><span class="mono">media</span></span>
+          </div>
+          <p class="caption-note" id="amp-bars-note"></p>
+        </figure>
+        <figure class="panel figure amp__fig">
+          <figcaption>La misma iteración vista como un giro de <span class="mono">φ = (2k+1)θ</span></figcaption>
+          <svg class="geo" id="amp-geo" viewBox="0 0 260 260" role="img" aria-labelledby="amp-geo-t" aria-describedby="amp-geo-d">
+            <title id="amp-geo-t">Vector de estado en el plano del marcado y el resto</title>
+            <desc id="amp-geo-d"></desc>
+            <circle class="geo__ring" cx="130" cy="130" r="104"/>
+            <line class="geo__axis" x1="16" y1="130" x2="244" y2="130"/>
+            <line class="geo__axis" x1="130" y1="244" x2="130" y2="16"/>
+            <text class="geo__lbl" x="246" y="122" text-anchor="end">|s'⟩ resto</text>
+            <text class="geo__lbl geo__lbl--w" x="136" y="22">|ω⟩ marcado</text>
+            <line class="geo__ghost" id="geo-s" x1="130" y1="130" x2="234" y2="130"/>
+            <line class="geo__guide" id="geo-guide-w" x1="130" y1="130" x2="130" y2="130"/>
+            <line class="geo__proj geo__proj--s" id="geo-proj-s" x1="130" y1="130" x2="130" y2="130"/>
+            <line class="geo__proj geo__proj--w" id="geo-proj-w" x1="130" y1="130" x2="130" y2="130"/>
+            <line class="geo__vec" id="geo-vec" x1="130" y1="130" x2="234" y2="130"/>
+            <circle class="geo__tip" id="geo-tip" cx="234" cy="130" r="5"/>
+          </svg>
+          <p class="caption-note">Ángulo actual <span class="mono" id="amp-phi">—</span>. La sombra cian sobre <span class="mono">|ω⟩</span> es la amplitud del marcado; la línea discontinua, el estado inicial <span class="mono">|s⟩</span>.</p>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section wrap" id="azar" data-reveal aria-labelledby="azar-title">
       <div class="section__head">
         <h2 id="azar-title">Azar frente a Grover</h2>
         <p class="section__sub">El mismo problema visto desde la estadística y desde la física.</p>
@@ -302,6 +417,7 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
             </div>
             <button class="btn btn--primary" type="submit" id="mc-run">Simular</button>
           </form>
+          <p class="hint mc-preview" id="mc-preview"></p>
           <p class="state" id="mc-state" role="status">Cada repetición esconde un secreto nuevo y cuenta cuántos intentos hacen falta.</p>
           <div class="chart" id="mc-hist"></div>
           <p class="legend" id="mc-legend" hidden><span class="key key--mean"></span>Media medida <b class="mono" id="mc-mean"></b> <span class="key key--exp"></span>Esperada (N+1)/2 <b class="mono" id="mc-exp"></b></p>
@@ -339,7 +455,7 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
       </div>
     </section>
 
-    <section class="section wrap" id="contrasena" aria-labelledby="pw-title">
+    <section class="section wrap" id="contrasena" data-reveal aria-labelledby="pw-title">
       <div class="section__head">
         <h2 id="pw-title">Tu contraseña: ¿qué tan segura es?</h2>
         <p class="section__sub">Explora una estimación de entropía y compara los supuestos de una búsqueda clásica con Grover idealizado. También puedes generar una contraseña aleatoria en este navegador.</p>
@@ -447,7 +563,7 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
             <p class="state gen__status" id="gen-status" role="status"></p>
 
             <div class="goal">
-              <p class="goal__label">Meta educativa: <b class="mono">≥ 128 bits</b> (64 efectivos en el modelo ideal)</p>
+              <p class="goal__label">Meta educativa: <b class="mono">≥ 128 bits</b> ⇒ ~64 bits efectivos frente a Grover idealizado. No es una certificación.</p>
               <div class="goal__track" aria-hidden="true"><span class="goal__fill" id="gen-meter"></span><span class="goal__line"></span></div>
               <p class="goal__text" id="gen-goal"></p>
               <p class="visually-hidden" id="gen-live" aria-live="polite"></p>
@@ -463,7 +579,7 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
       <p class="note">El tiempo de Grover es un escenario hipotético que supone un millón de iteraciones del oráculo por segundo. El analizador estima la entropía; el generador calcula bits según su método de elección. La meta de 128 bits equivale a unos 64 efectivos bajo el modelo idealizado: no es una certificación de seguridad.</p>
     </section>
 
-    <section class="section wrap" id="poscuantica" aria-labelledby="pqc-title">
+    <section class="section wrap" id="poscuantica" data-reveal aria-labelledby="pqc-title">
       <div class="section__head">
         <h2 id="pqc-title">Criptografía poscuántica</h2>
         <p class="section__sub">Qué algoritmos están en riesgo, ante qué ataque y con qué se reemplazan.</p>
@@ -472,7 +588,7 @@ IIIIIIII  BBBBBBB   MM      MM</pre>
       <div class="cards" id="pqc-cards"></div>
     </section>
 
-    <section class="section wrap" id="limites" aria-labelledby="lim-title">
+    <section class="section wrap" id="limites" data-reveal aria-labelledby="lim-title">
       <div class="section__head">
         <h2 id="lim-title">Limitaciones: lo que esta demo no demuestra</h2>
         <p class="section__sub">Límites honestos de la simulación y del algoritmo.</p>

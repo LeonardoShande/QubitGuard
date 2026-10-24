@@ -142,7 +142,7 @@ function initGenerator(hooks: PasswordHooks): void {
     fill.style.transform = `scaleX(${Math.min(1, bits / GOAL_SCALE_BITS)})`;
     fill.classList.toggle("is-met", meets);
     $("gen-goal").textContent = !current ? "Genera una contraseña para compararla con la meta."
-      : meets ? `Cumple la meta: ${fmtBits(current.groverBits)} bits efectivos frente a Grover.`
+      : meets ? `Cumple la meta educativa: ${fmtBits(current.groverBits)} bits efectivos frente a Grover idealizado (≥ 128 bits ⇒ ~64 efectivos). No es una certificación.`
       : `Le faltan ${fmtBits(GROVER_GOAL_BITS - bits)} bits para la meta educativa.`;
     $("gen-goal").classList.toggle("is-met", meets);
   };

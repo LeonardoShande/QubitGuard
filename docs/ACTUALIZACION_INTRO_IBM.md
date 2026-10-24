@@ -1,5 +1,31 @@
 # Actualización: intro IBM de 8 filas (2026-10-24)
 
+## Revisión 2: arte de 32 columnas alineado
+
+La versión anterior tenía la fila `MM MMMM MM` con 12 columnas y el resto de la M con 10:
+se veía torcida. El arte vigente tiene columnas constantes (I = 8, B = 8, M = 12, separación 2):
+
+```
+IIIIIIII  BBBBBBB   MMM      MMM
+   II     BB    BB  MMMM    MMMM
+   II     BB    BB  MM MM  MM MM
+   II     BBBBBBB   MM  MMMM  MM
+   II     BBBBBBB   MM   MM   MM
+   II     BB    BB  MM        MM
+   II     BB    BB  MM        MM
+IIIIIIII  BBBBBBB   MM        MM
+```
+
+- Tamaño `clamp(0.62rem, 4.1vw, 2.6rem)`, interlineado 1,2: ≈252 px a 320 px de ancho y ≈800 px a 1440 px.
+- Cada fila es un bloque (`.intro__row`) con su propio barrido de luz, escalonado 28 ms por fila
+  (`--r`, desde 1550 ms, 650 ms): refuerza las franjas horizontales junto a las filas alternas tenues.
+- Onda de colapso: termina hacia 1,8 s (31 columnas × 26 ms + 7 filas × 40 ms + 140 ms + hasta 580 ms),
+  por debajo del 72 % de 2,9 s (≈2,09 s).
+- Saltable: Escape, foco en un control o clic/toque en la capa (la capa recibe el clic, así no llega
+  a un control invisible debajo). Texto visible «Toca o pulsa Esc para saltar».
+
+La sección original se conserva abajo como historial.
+
 Nota de cambio para agentes. El detalle completo del sistema sigue en
 `docs/UI_ASCII_Y_MOTION.md`; este archivo solo registra la última revisión de la entrada.
 

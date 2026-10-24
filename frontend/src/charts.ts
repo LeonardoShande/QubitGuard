@@ -1,5 +1,7 @@
 // Gráficos SVG propios, dibujados al ancho real del contenedor para que el texto no se deforme.
 
+import { motion } from "./dom.js";
+
 const NS = "http://www.w3.org/2000/svg";
 
 type Attrs = Record<string, string | number>;
@@ -34,9 +36,22 @@ function paint(host: HTMLElement, draw: Draw, width: number): void {
   const entering = host.dataset.animate === "1";
   delete host.dataset.animate;
   host.dataset.width = String(width);
+  // Alturas en píxeles de las barras que se ven ahora: si la nueva generación tiene las
+  // mismas barras, cada una transiciona desde su altura anterior en vez de nacer desde cero.
+  const before = entering ? [...host.querySelectorAll("rect.bar")].map((r) => Number(r.getAttribute("height"))) : [];
   const svg = draw(width);
-  if (entering) svg.classList.add("is-entering");
+  const after = [...svg.querySelectorAll<SVGRectElement>("rect.bar")];
+  const morph = entering && before.length > 0 && before.length === after.length;
+  if (entering) svg.classList.add(morph ? "is-morphing" : "is-entering");
   host.replaceChildren(svg);
+  if (!morph) return;
+  after.forEach((rect, i) => {
+    const to = Number(rect.getAttribute("height"));
+    const from = before[i]!;
+    // Una barra que queda a 0 px no se puede escalar: desaparece sin más.
+    if (to < 0.5 || Math.abs(from - to) < 0.5) return;
+    motion(rect, [{ transform: `scaleY(${Math.max(from, 0.5) / to})` }, { transform: "none" }], 440, Math.min(i * 6, 180));
+  });
 }
 
 /** Retira también el redibujado pendiente al pasar a un estado vacío. */

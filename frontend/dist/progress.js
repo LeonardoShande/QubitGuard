@@ -9,13 +9,13 @@ export const STEPS = [
     { id: "oraculo", title: "Oráculo", task: "Ejecuta con 1 iteración: una sola consulta al oráculo ya favorece al marcado." },
     { id: "amplificacion", title: "Amplificación", task: "Predice y ejecuta con el número óptimo de iteraciones." },
     { id: "ruido", title: "Ruido", task: "Activa el ruido de FakeFez y compara con el resultado ideal." },
-    { id: "criptografia", title: "Criptografía", task: "Consigue una contraseña de 128 bits o más: 64 efectivos frente a Grover." },
+    { id: "criptografia", title: "Criptografía", task: "Consigue una contraseña de 128 bits o más (≥128 bits ⇒ ~64 efectivos frente a Grover idealizado; no es una certificación)." },
 ];
 export const ACHIEVEMENTS = [
     { id: "prediccion", title: "Primera predicción", detail: "Te comprometiste con un número antes de mirar." },
     { id: "prediccion-exacta", title: "Primera predicción exacta", detail: "A 3 puntos o menos, o las iteraciones justas." },
     { id: "ruido", title: "Viste el ruido borrar a Grover", detail: "Con ruido, la medida cayó muy por debajo de la teoría." },
-    { id: "pw128", title: "Contraseña de 128+ bits generada", detail: "Meta educativa: 64 bits efectivos o más en el modelo ideal." },
+    { id: "pw128", title: "Contraseña de 128+ bits generada", detail: "Meta educativa: ≥128 bits ⇒ ~64 bits efectivos frente a Grover idealizado; no es una certificación." },
     { id: "racha3", title: "Tres días seguidos", detail: "Resolviste el reto diario tres días sin cortar." },
     { id: "ruta", title: "Ruta completa", detail: "Recorriste los cinco pasos, de la superposición a la criptografía." },
 ];

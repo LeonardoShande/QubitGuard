@@ -21,7 +21,13 @@
   --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --sans: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
   --r: 8px;
+  /* Motion: una sola curva de salida para UI y una de ida y vuelta para lo que se mueve en pantalla.
+     Duraciones de UI entre 150 y 450 ms (docs/UI_ASCII_Y_MOTION.md). */
   --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 450ms;
   color-scheme: dark;
 }
 
@@ -106,27 +112,34 @@ legend { padding: 0; }
 .ascii-toggle span { color: var(--cyan); margin-left: 0.4rem; }
 .ascii-toggle[aria-pressed="false"] span { color: var(--muted); }
 .ibm-intro { display: none; }
-.ibm-intro__content { text-align: center; padding: 1.5rem; }
+.ibm-intro__content { text-align: center; padding: 1.5rem 1rem; max-width: 100%; }
 /* La entrada IBM "se forma" (ambience.ts): cada glifo en superposición (cian) colapsa al
-   carácter final; las filas alternas quedan más tenues como las franjas de la marca. */
-.ibm-intro__letters { position: relative; margin: 0; overflow: hidden; color: var(--text); font: 700 clamp(0.62rem, 3.2vw, 2rem)/1.35 var(--mono); }
+   carácter final. 32 columnas: 4,1vw cabe a 320 px (≈252 px de ancho) y a 1440 px se queda
+   en 2,6rem (≈800 px). Filas alternas tenues + barrido escalonado por fila = franjas IBM. */
+.ibm-intro__letters {
+  position: relative; display: inline-block; margin: 0; text-align: left; color: var(--text);
+  font: 700 clamp(0.62rem, 4.1vw, 2.6rem)/1.2 var(--mono); letter-spacing: 0;
+}
+.intro__row { position: relative; display: block; overflow: hidden; }
 .intro__ch { color: var(--cyan); }
 .intro__ch.is-set { color: var(--text); animation: ch-lock 180ms var(--ease); }
+.intro__row:not(.intro__row--alt) .intro__ch.is-set { text-shadow: 0 0 14px rgba(70, 217, 232, 0.28); }
 .intro__row--alt .intro__ch.is-set { color: var(--muted); }
 @keyframes ch-lock { from { color: #eafcff; } 60% { color: #eafcff; } }
-/* Un solo barrido de luz sobre las letras ya formadas, como el ascii-sheen del portfolio. */
-.ibm-intro__letters::after {
-  content: ""; position: absolute; top: 0; bottom: 0; left: -32%; width: 22%;
-  background: linear-gradient(105deg, transparent, rgba(220, 245, 255, 0.13), transparent);
-  transform: skewX(-12deg); opacity: 0; pointer-events: none;
+/* Barrido de luz por fila, escalonado con --r: eco del ascii-sheen del portfolio. */
+.intro__row::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -30%; width: 24%;
+  background: linear-gradient(100deg, transparent, rgba(220, 245, 255, 0.24), transparent);
+  transform: skewX(-14deg); opacity: 0; pointer-events: none;
 }
 .ibm-intro__qiskit { color: var(--cyan); margin-block: 1.5rem 0.65rem; font-size: clamp(0.875rem, 2vw, 1.1rem); }
-.ibm-intro__content > p:last-child { color: var(--muted); font-size: 0.75rem; }
+.ibm-intro__qiskit + p { color: var(--muted); font-size: 0.75rem; }
+.ibm-intro__skip { margin-top: 1.25rem; color: var(--muted); font-size: 0.72rem; }
 body:focus-within .ibm-intro { display: none; }
 @media (prefers-reduced-motion: no-preference) {
-  .ibm-intro { display: grid; place-items: center; position: fixed; inset: 0; z-index: 45; background: var(--bg); pointer-events: none; animation: ibm-intro 2900ms var(--ease) both; }
+  .ibm-intro { display: grid; place-items: center; position: fixed; inset: 0; z-index: 45; background: var(--bg); cursor: pointer; animation: ibm-intro 2900ms var(--ease) both; }
   .ibm-intro__letters { animation: ibm-letters 300ms var(--ease) both; }
-  .ibm-intro__letters::after { animation: intro-sheen 900ms ease-in-out 1800ms both; }
+  .intro__row::after { animation: intro-sheen 650ms var(--ease-in-out) calc(1550ms + var(--r, 0) * 28ms) both; }
 }
 @keyframes ibm-letters {
   0% { opacity: 0; transform: translateY(8px); }
@@ -137,10 +150,22 @@ body:focus-within .ibm-intro { display: none; }
   100% { opacity: 0; visibility: hidden; }
 }
 @keyframes intro-sheen {
-  0% { opacity: 0; transform: translateX(0) skewX(-12deg); }
+  0% { opacity: 0; transform: translateX(0) skewX(-14deg); }
   18%, 82% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(560%) skewX(-12deg); }
+  100% { opacity: 0; transform: translateX(560%) skewX(-14deg); }
 }
+
+/* Entrada de secciones al hacer scroll (dom.ts initReveal): una vez, hijos escalonados 70 ms.
+   Solo bajo html.reveal-on, que el JS pone si hay IntersectionObserver y movimiento permitido. */
+.reveal-on [data-reveal]:not(.is-in) > * { opacity: 0; }
+.reveal-on [data-reveal].is-in > * { animation: arrive var(--dur-slow) var(--ease) backwards; }
+.reveal-on [data-reveal].is-in > :nth-child(2) { animation-delay: 70ms; }
+.reveal-on [data-reveal].is-in > :nth-child(3) { animation-delay: 140ms; }
+.reveal-on [data-reveal].is-in > :nth-child(n+4) { animation-delay: 210ms; }
+
+/* Carga → resultado: lo anterior se atenúa mientras llega lo nuevo (transición interrumpible). */
+.chart, .lab__out > .figure, .lab__out > .metrics, .lab__out > .ppo { transition: opacity var(--dur) var(--ease); }
+.chart.is-stale, .lab__out.is-stale > .figure, .lab__out.is-stale > .metrics, .lab__out.is-stale > .ppo { opacity: 0.45; }
 
 .wrap { width: 100%; max-width: 1240px; margin-inline: auto; padding-inline: 20px; }
 @media (min-width: 768px) { .wrap { padding-inline: 28px; } }
@@ -378,7 +403,8 @@ select.input { appearance: auto; }
 .tick--hi { fill: var(--cyan); font-weight: 600; }
 .axis-title { fill: var(--muted); font: 12px var(--sans); }
 .bars { transform-box: fill-box; transform-origin: bottom; }
-.bar { fill: var(--edge); }
+/* transform-box/origin fijos: la transición entre generaciones (charts.ts) escala desde la base. */
+.bar { fill: var(--edge); transform-box: fill-box; transform-origin: bottom; }
 .bar--hi { fill: var(--cyan); }
 .bars--mc .bar { fill: #8a6f84; }
 .ref { stroke-width: 2; }
@@ -425,6 +451,10 @@ select.input { appearance: auto; }
 @keyframes chart-fade { from { opacity: 0; } }
 .chart svg.is-entering .ref { transform-box: fill-box; transform-origin: top; animation: ref-drop 480ms var(--ease) 140ms both; }
 @keyframes ref-drop { from { transform: scaleY(0); } }
+/* Generación nueva con las mismas barras: ejes y referencias se funden; las barras las mueve WAAPI. */
+.chart svg.is-morphing .tick,
+.chart svg.is-morphing .grid,
+.chart svg.is-morphing .ref { animation: chart-fade 300ms var(--ease) both; }
 /* Línea de escaneo que recorre el gráfico mientras aparece: "midiendo". */
 .chart:has(> svg.is-entering) { position: relative; }
 .chart:has(> svg.is-entering)::after {
@@ -642,6 +672,81 @@ select.input { appearance: auto; }
 .metrics--gen { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)); }
 .metrics--gen dd { font-size: 1rem; }
 .dd-note { margin: 0.15rem 0 0; font-size: 0.75rem; color: var(--muted); line-height: 1.35; }
+
+/* El problema --------------------------------------------------------- */
+.kicker { margin-bottom: 0.6rem; color: var(--muted); font-size: 0.8rem; }
+.problem__grid { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+@media (min-width: 820px) { .problem__grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
+.problem__card { display: grid; gap: 0.7rem; align-content: start; padding: 1.25rem 1.5rem; background: var(--panel); min-width: 0; }
+.problem__card h3 { display: grid; gap: 0.45rem; font-size: 1.1rem; }
+.problem__tag { color: var(--cyan); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.problem__card--lead .problem__tag { color: var(--magenta); }
+.problem__card p, .problem__card li { color: var(--muted); font-size: 0.95rem; max-width: 62ch; }
+.problem__card .mono { color: var(--text); }
+.problem__loop { list-style: none; counter-reset: loop; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+@media (min-width: 560px) { .problem__loop { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.problem__loop li { counter-increment: loop; display: flex; gap: 0.6rem; align-items: baseline; padding: 0.6rem 0.75rem; border: 1px solid var(--line-2); border-radius: var(--r); }
+.problem__loop li::before { content: counter(loop); flex: none; color: var(--cyan); font: 600 0.8rem var(--mono); }
+.problem__loop b { color: var(--text); }
+.problem__evidence { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.problem__evidence li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); }
+.problem__ok { color: var(--ok); }
+.problem__todo { color: var(--warn); }
+
+/* Explorador de amplitudes ------------------------------------------------ */
+.amp-map { display: grid; gap: 1px; margin: 0 0 1.25rem; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+@media (min-width: 820px) { .amp-map { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.amp-map > div { padding: 1rem 1.25rem; background: var(--panel); }
+.amp-map dt { color: var(--magenta); font: 600 0.75rem var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.amp-map > div + div dt { color: var(--cyan); }
+.amp-map dd { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.925rem; }
+.amp-map .mono { color: var(--text); white-space: nowrap; }
+.amp-gate { display: grid; gap: 1rem; border-style: dashed; border-color: var(--edge); }
+.amp-gate p { max-width: 64ch; color: var(--muted); }
+.amp-gate b { color: var(--text); }
+.amp-gate__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.amp-gate__actions .btn { text-decoration: none; }
+.amp { display: grid; gap: 1.25rem; }
+@media (min-width: 700px) { .amp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .amp__controls { grid-column: 1 / -1; } }
+@media (min-width: 1100px) { .amp { grid-template-columns: 300px minmax(0, 1fr) minmax(0, 1fr); align-items: start; } .amp__controls { grid-column: auto; } }
+.amp__controls { display: grid; gap: 1.1rem; align-content: start; }
+.amp__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.amp__phase { min-height: 1.4em; color: var(--magenta); font-size: 0.8rem; }
+.amp__read { display: grid; gap: 0.9rem; margin: 0; }
+.amp__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem 0.75rem; align-items: baseline; }
+.amp__row dt { color: var(--muted); font-size: 0.85rem; }
+.amp__row dt .mono { display: block; color: var(--text); font-size: 0.75rem; }
+.amp__row dd { margin: 0; font-size: 1.35rem; font-weight: 500; }
+.amp__row--q dd { color: var(--cyan); }
+.amp__row--c dd { color: var(--magenta); }
+.amp__track { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--line-2); overflow: hidden; }
+.amp__fill { display: block; height: 100%; transform: scaleX(0); transform-origin: left; transition: transform 320ms var(--ease); }
+.amp__row--q .amp__fill { background: var(--cyan); }
+.amp__row--c .amp__fill { background: var(--magenta); }
+/* 168 px fijos: amplitud 1 = 84 px (BAR_HALF en explorer.ts). Cero en el centro, negativos hacia abajo. */
+.amp__plot { position: relative; display: flex; gap: 6px; height: 168px; margin-bottom: 1.75rem; padding-inline: 4px; }
+.amp__col { position: relative; flex: 1 1 0; min-width: 0; }
+.amp__bar { position: absolute; left: 0; right: 0; bottom: 50%; height: 50%; border-radius: 2px; background: var(--edge); transform: scaleY(0); transform-origin: bottom; will-change: transform; }
+.amp__bar--hi { background: var(--cyan); transition: box-shadow var(--dur-fast) var(--ease); }
+.amp__lbl { position: absolute; left: 0; right: 0; top: calc(100% + 6px); color: var(--cyan); font-size: 0.8rem; text-align: center; }
+.amp__zero { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--edge); }
+.amp__mean { position: absolute; left: -2px; right: -2px; top: 50%; height: 0; border-top: 2px dashed var(--magenta); will-change: transform; }
+.amp__mean span { position: absolute; right: 0; top: -1.4rem; padding: 0 0.25rem; background: var(--panel); color: var(--magenta); font-size: 0.7rem; }
+.amp__plot.is-oracle .amp__bar--hi { box-shadow: 0 0 0 2px var(--text); }
+.amp__plot.is-diffusing .amp__mean { border-top-style: solid; }
+.geo { display: block; width: 100%; max-width: 320px; height: auto; margin-inline: auto; overflow: visible; }
+.geo__ring { fill: none; stroke: var(--line-2); stroke-width: 1; }
+.geo__axis { stroke: var(--edge); stroke-width: 1; }
+.geo__lbl { fill: var(--muted); font: 11px var(--mono); }
+.geo__lbl--w { fill: var(--cyan); }
+.geo__ghost { stroke: var(--text); stroke-width: 1.5; stroke-dasharray: 4 4; opacity: 0.55; }
+.geo__guide { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; }
+.geo__proj { stroke-width: 5; stroke-linecap: round; }
+.geo__proj--w { stroke: var(--cyan); }
+.geo__proj--s { stroke: var(--edge); }
+.geo__vec { stroke: var(--text); stroke-width: 2.5; stroke-linecap: round; }
+.geo__tip { fill: var(--cyan); stroke: var(--panel); stroke-width: 2; }
+.mc-preview:empty { display: none; }
 
 /* Footer y toast --------------------------------------------------------- */
 .footer { border-top: 1px solid var(--line); padding-block: 2rem 3rem; color: var(--muted); font-size: 0.875rem; }

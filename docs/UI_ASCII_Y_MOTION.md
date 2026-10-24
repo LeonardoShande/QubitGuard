@@ -37,12 +37,13 @@ oculta y `prefers-reduced-motion` pausan la animación CSS y detienen el ticker 
 carácter. Cada glifo nace en superposición (cian, con ψ θ φ ⊗ π…) y "colapsa" al carácter
 final (blanco; filas alternas en gris, como las franjas de la marca IBM) en una onda de
 izquierda a derecha (~26 ms por columna + 40 ms por fila). El bloque ASCII replica la
-referencia del usuario: 8 filas con la separación ancha de la marca (30 columnas), con la B
-de dos vientres y la M con diagonal descendente. Al final, un único sheen de luz recorre
-las letras (eco del `ascii-sheen` del portfolio thealejo-dev.cc). Duración total 2,9 s: el
-colapso acaba hacia 1,8 s, el sheen va de 1,8 a 2,7 s y el desvanecido empieza en el 72 %
-(~2,1 s). Escape la retira, el foco en un control la oculta y con `prefers-reduced-motion`
-no llega a ejecutarse.
+referencia del usuario: 8 filas de 32 columnas constantes (I = 8, B = 8, M = 12, separación 2),
+con la B de dos vientres y la M con diagonal. Cada fila es un bloque con su propio barrido de
+luz, escalonado 28 ms por fila (eco del `ascii-sheen` del portfolio thealejo-dev.cc), que
+refuerza las franjas horizontales. Duración total 2,9 s: el colapso acaba hacia 1,8 s, los
+barridos van de 1,55 a ~2,4 s y el desvanecido empieza en el 72 % (~2,1 s). Escape o un
+clic/toque la retiran, el foco en un control la oculta y con `prefers-reduced-motion` no llega
+a ejecutarse. Detalle del arte en `docs/ACTUALIZACION_INTRO_IBM.md`.
 
 ## Animación de gráficos
 
@@ -62,6 +63,22 @@ pasar por este flag o cada redibujado re-animaría.
 Con `prefers-reduced-motion`, el bloque global de reducción colapsa todas las duraciones a
 0,01 ms: no hace falta código extra por animación.
 
+## Motion de la interfaz (rama `feat/motion-ibm-casaos`)
+
+| Pieza | Dónde | Cómo |
+|---|---|---|
+| Entrada de secciones | `dom.ts` `initReveal()` + CSS `.reveal-on [data-reveal]` | IntersectionObserver, una vez por sección; hijos directos con `arrive` 450 ms y escalonado de 70 ms. Solo se activa si hay IO y movimiento permitido (la clase `html.reveal-on` la pone el JS: sin JS todo es visible). El foco por teclado revela la sección al instante. |
+| Histograma entre ejecuciones | `charts.ts` `paint()` | Si la generación nueva tiene las mismas barras, cada barra transiciona (WAAPI, 440 ms) desde su altura anterior en píxeles (`.is-morphing`); si cambia el número de barras, entra desde cero (`.is-entering`). |
+| Cifras que cuentan | `dom.ts` `countTo()` | rAF transitorio de 420 ms desde el valor anterior; se cancela si llega otro valor. HUD de XP, métricas del laboratorio, POE y medias Monte Carlo. La primera pintura del HUD es instantánea. |
+| Carga → resultado | `.is-stale` | El resultado anterior se atenúa a 0,45 mientras llega el nuevo (transición CSS interrumpible). |
+| Paneles y mensajes | `main.ts` `setState`, `observe`; `dom.ts` `fieldError` | Estado, botón Reintentar, panel POE y errores de campo aparecen con opacidad + desplazamiento corto (180–320 ms). Las salidas son instantáneas: un mensaje que se quita no debe quedarse visible. |
+| Comparación en vivo | `main.ts` `initCompare`, `initMonteCarlo` | El gráfico clásico/Grover se recalcula 300 ms después de dejar de escribir (caché de `api.ts`); los bits Monte Carlo muestran al instante la expectativa teórica. |
+| Explorador de amplitudes | `explorer.ts` | Un solo ángulo φ alimenta barras, media, vector y proyecciones con un tween rAF de 260–420 ms: lo dibujado siempre es coherente. «Siguiente iteración» anima en dos tiempos: oráculo (φ → −φ) y difusor (−φ → φ + 2θ). Cualquier control nuevo interrumpe el tween. |
+
+Tokens en `:root`: `--ease` (salida), `--ease-in-out` (movimiento en pantalla), `--dur-fast` 160 ms,
+`--dur` 240 ms, `--dur-slow` 450 ms. Solo se animan `transform`, `opacity` y atributos SVG del
+explorador; nada de layout.
+
 ## Invariantes que no se deben romper
 
 1. **Sin canvas ni WebGL ni dependencias nuevas.** El proyecto corre sin internet; CSS y
@@ -79,11 +96,21 @@ Con `prefers-reduced-motion`, el bloque global de reducción colapsa todas las d
    (`--panel`) opacos; nada del fondo por encima de `z-index: -1`.
 6. **`--i` en barras y puntos**: si se cambia el generador de gráficos, mantener la variable
    o quitar el escalonado; un `--i` ausente hace delay 0 (aceptable, no rompe).
+7. **Los bucles rAF son transitorios** (`countTo`, tween del explorador): terminan en ≤ 450 ms o al
+   llegar otro valor. No añadir bucles permanentes por frame; el fondo sigue siendo CSS.
+8. **Reveal sin trampas**: nunca ocultar contenido sin `html.reveal-on`; mantener el revelado por
+   `focusin`; no aplicar `[data-reveal]` al hero (ya tiene su entrada).
+9. **Transición de barras**: `.bar` lleva `transform-box: fill-box; transform-origin: bottom`. Si se
+   cambia `barChart`, mantener `class="bar"` y el atributo `height` en píxeles, que es lo que
+   `paint()` compara.
+10. **Explorador**: `.amp__plot` mide 168 px y `BAR_HALF` (84) en `explorer.ts` debe ser su mitad.
+    Las fórmulas exactas están probadas en `test/explorer.test.mjs` (normalización, oráculo +
+    reflexión sobre la media = una iteración, óptimos conocidos).
 
 ## Cómo verificar tras tocar esto
 
 ```bash
-cd frontend && npm test      # tsc + 33 tests node
+cd frontend && npm test      # tsc + 36 tests node
 cd .. && ../.venv/bin/uvicorn app.main:app --port 8010   # abrir http://127.0.0.1:8010
 ```
 

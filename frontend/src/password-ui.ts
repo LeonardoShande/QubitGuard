@@ -14,7 +14,7 @@ export interface PasswordHooks {
   onStrong(kind: "analizada" | "generada"): void;
 }
 
-/** Meta de resistencia frente a Grover: 128 bits, que Grover reduce a 64 efectivos. */
+/** Meta educativa de 128 bits; no certifica resistencia a un ataque real. */
 export const GROVER_GOAL_BITS = 128;
 /** Extremo de la escala del medidor del generador. */
 const GOAL_SCALE_BITS = 192;
@@ -143,7 +143,7 @@ function initGenerator(hooks: PasswordHooks): void {
     fill.classList.toggle("is-met", meets);
     $("gen-goal").textContent = !current ? "Genera una contraseña para compararla con la meta."
       : meets ? `Cumple la meta: ${fmtBits(current.groverBits)} bits efectivos frente a Grover.`
-      : `Le faltan ${fmtBits(GROVER_GOAL_BITS - bits)} bits para resistir a Grover.`;
+      : `Le faltan ${fmtBits(GROVER_GOAL_BITS - bits)} bits para la meta educativa.`;
     $("gen-goal").classList.toggle("is-met", meets);
   };
 

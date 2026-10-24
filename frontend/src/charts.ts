@@ -33,6 +33,14 @@ function paint(host: HTMLElement, draw: Draw, width: number): void {
   host.replaceChildren(draw(width));
 }
 
+/** Retira también el redibujado pendiente al pasar a un estado vacío. */
+export function unmount(host: HTMLElement): void {
+  observer.unobserve(host);
+  draws.delete(host);
+  host.removeAttribute("data-width");
+  host.replaceChildren();
+}
+
 /** Dibuja en `host` y vuelve a dibujar cuando cambia su ancho. */
 export function mount(host: HTMLElement, draw: Draw): void {
   if (!draws.has(host)) observer.observe(host);

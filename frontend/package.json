@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit",
-    "test": "tsc && node --test test/password.test.mjs test/generator.test.mjs test/progress.test.mjs"
+    "test": "tsc && node --test test/password.test.mjs test/generator.test.mjs test/progress.test.mjs test/dom.test.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

@@ -6,7 +6,7 @@ QubitGuard compara la búsqueda clásica de un secreto con el algoritmo de Grove
 
 **Todos los circuitos se ejecutan en simuladores locales.** No se necesita cuenta de IBM Quantum, token, hardware cuántico ni base de datos. El proyecto es una herramienta didáctica; no ejecuta ataques contra sistemas reales.
 
-El laboratorio se integró en `main` mediante el [PR #1](https://github.com/LeonardoShande/QubitGuard/pull/1). La [guía del código](docs/GUIA_DEL_CODIGO.md) explica sus módulos, y la [revisión frente al prompt y las bases](docs/REVISION_PROMPT_Y_BASES.md) compara lo implementado con el encargo y prioriza mejoras.
+El laboratorio se integró en `main` mediante el [PR #1](https://github.com/LeonardoShande/QubitGuard/pull/1). La [guía del código](docs/GUIA_DEL_CODIGO.md) explica sus módulos, y la [revisión frente al prompt y las bases](docs/REVISION_PROMPT_Y_BASES.md) compara lo implementado con el encargo y prioriza mejoras en general.
 
 ## Contenido
 

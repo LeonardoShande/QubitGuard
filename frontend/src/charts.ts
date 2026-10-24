@@ -38,10 +38,14 @@ function paint(host: HTMLElement, draw: Draw, width: number): void {
   host.dataset.width = String(width);
   // Alturas en píxeles de las barras que se ven ahora: si la nueva generación tiene las
   // mismas barras, cada una transiciona desde su altura anterior en vez de nacer desde cero.
-  const before = entering ? [...host.querySelectorAll("rect.bar")].map((r) => Number(r.getAttribute("height"))) : [];
+  // Se emparejan por etiqueta (el <title> "etiqueta: valor"): si cambian los estados o los
+  // intervalos del eje, la generación entra desde cero en vez de mezclar barras distintas.
+  const key = (r: Element) => r.querySelector("title")?.textContent?.split(":")[0] ?? "";
+  const old = entering ? [...host.querySelectorAll("rect.bar")] : [];
+  const before = old.map((r) => Number(r.getAttribute("height")));
   const svg = draw(width);
   const after = [...svg.querySelectorAll<SVGRectElement>("rect.bar")];
-  const morph = entering && before.length > 0 && before.length === after.length;
+  const morph = entering && old.length > 0 && old.length === after.length && after.every((r, i) => key(r) === key(old[i]!));
   if (entering) svg.classList.add(morph ? "is-morphing" : "is-entering");
   host.replaceChildren(svg);
   if (!morph) return;

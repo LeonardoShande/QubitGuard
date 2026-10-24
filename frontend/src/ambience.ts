@@ -115,6 +115,7 @@ export function initAmbience(): void {
     stopDecode?.();
     stopDecode = null;
     document.removeEventListener("keydown", skip);
+    document.removeEventListener("focusin", finish);
   };
 
   const sync = () => {
@@ -141,6 +142,9 @@ export function initAmbience(): void {
   intro.addEventListener("animationend", (event) => { if (event.target === intro) finish(); });
   // Saltable con un toque o clic: la capa recibe el clic, así no llega a un control invisible debajo.
   intro.addEventListener("click", finish);
+  // El CSS la oculta al enfocar (body:focus-within); esto la retira del todo para que no
+  // reaparezca, reiniciada, si el foco sale del documento antes de acabar.
+  document.addEventListener("focusin", finish);
   document.addEventListener("keydown", skip);
   if (reduced.matches) finish();
 }

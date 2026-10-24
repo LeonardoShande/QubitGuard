@@ -49,7 +49,7 @@ export function countTo(node, to, format, animate = true) {
     const from = prev?.value ?? 0;
     const state = { value: to, frame: 0 };
     counts.set(node, state);
-    if (!animate || reduceQuery.matches || from === to || !Number.isFinite(from) || typeof requestAnimationFrame !== "function") {
+    if (!animate || reduceQuery.matches || from === to || !Number.isFinite(from) || !Number.isFinite(to) || typeof requestAnimationFrame !== "function") {
         node.textContent = format(to);
         return;
     }

@@ -68,7 +68,7 @@ Con `prefers-reduced-motion`, el bloque global de reducción colapsa todas las d
 | Pieza | Dónde | Cómo |
 |---|---|---|
 | Entrada de secciones | `dom.ts` `initReveal()` + CSS `.reveal-on [data-reveal]` | IntersectionObserver, una vez por sección; hijos directos con `arrive` 450 ms y escalonado de 70 ms. Solo se activa si hay IO y movimiento permitido (la clase `html.reveal-on` la pone el JS: sin JS todo es visible). El foco por teclado revela la sección al instante. |
-| Histograma entre ejecuciones | `charts.ts` `paint()` | Si la generación nueva tiene las mismas barras, cada barra transiciona (WAAPI, 440 ms) desde su altura anterior en píxeles (`.is-morphing`); si cambia el número de barras, entra desde cero (`.is-entering`). |
+| Histograma entre ejecuciones | `charts.ts` `paint()` | Si la generación nueva tiene las mismas barras, cada barra transiciona (WAAPI, 440 ms) desde su altura anterior en píxeles (`.is-morphing`); si cambian el número de barras o sus etiquetas (estados, intervalos del eje), entra desde cero (`.is-entering`). |
 | Cifras que cuentan | `dom.ts` `countTo()` | rAF transitorio de 420 ms desde el valor anterior; se cancela si llega otro valor. HUD de XP, métricas del laboratorio, POE y medias Monte Carlo. La primera pintura del HUD es instantánea. |
 | Carga → resultado | `.is-stale` | El resultado anterior se atenúa a 0,45 mientras llega el nuevo (transición CSS interrumpible). |
 | Paneles y mensajes | `main.ts` `setState`, `observe`; `dom.ts` `fieldError` | Estado, botón Reintentar, panel POE y errores de campo aparecen con opacidad + desplazamiento corto (180–320 ms). Las salidas son instantáneas: un mensaje que se quita no debe quedarse visible. |
@@ -101,8 +101,11 @@ explorador; nada de layout.
 8. **Reveal sin trampas**: nunca ocultar contenido sin `html.reveal-on`; mantener el revelado por
    `focusin`; no aplicar `[data-reveal]` al hero (ya tiene su entrada).
 9. **Transición de barras**: `.bar` lleva `transform-box: fill-box; transform-origin: bottom`. Si se
-   cambia `barChart`, mantener `class="bar"` y el atributo `height` en píxeles, que es lo que
-   `paint()` compara.
+   cambia `barChart`, mantener `class="bar"`, el atributo `height` en píxeles y el `<title>`
+   "etiqueta: valor" de cada barra: `paint()` empareja por esa etiqueta.
+11. **Intro y foco**: el primer `focusin` llama a `finish()` (no basta `body:focus-within`, que
+    reiniciaría la animación al perder el foco). Con movimiento reducido o al imprimir, el reveal
+    nunca deja contenido transparente.
 10. **Explorador**: `.amp__plot` mide 168 px y `BAR_HALF` (84) en `explorer.ts` debe ser su mitad.
     Las fórmulas exactas están probadas en `test/explorer.test.mjs` (normalización, oráculo +
     reflexión sobre la media = una iteración, óptimos conocidos).

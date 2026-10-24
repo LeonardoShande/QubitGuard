@@ -54,6 +54,7 @@ export function initExplorer(startUnlocked: boolean): { unlock(): void } {
   let bars: HTMLElement[] = [];
   let token = 0; // invalida tweens y pasos en curso al llegar otra orden (interrumpible)
   let liveTimer = 0;
+  let stepping = false;
 
   const buildBars = () => {
     const count = Math.min(2 ** n, 8);
@@ -120,7 +121,8 @@ export function initExplorer(startUnlocked: boolean): { unlock(): void } {
     kInput.setAttribute("aria-valuetext", `${k} ${k === 1 ? "iteración" : "iteraciones"}; el óptimo es ${opt}`);
     stepBtn.disabled = k >= Number(kInput.max);
     resetBtn.disabled = k === 0;
-    const verdict = k === opt ? "Es el óptimo." : k < opt ? `Faltan ${opt - k} para el óptimo.` : `Te pasaste del óptimo (${opt}): la flecha siguió girando.`;
+    const verdict = (k === 0 ? `Sin consultas, medir la superposición da 1/N, igual que adivinar a ciegas. ` : "")
+      + (k === opt ? "Es el óptimo." : k < opt ? `Faltan ${opt - k} para el óptimo.` : `Te pasaste del óptimo (${opt}): la flecha siguió girando.`);
     $("amp-verdict").textContent = verdict;
     $("amp-bars-note").textContent =
       `Marcado: amplitud ${num(a.marked)}, probabilidad ${pct(a.marked ** 2)}. Cada uno de los otros ${(N - 1).toLocaleString("es-PE")}: ${num(a.other)}. Media: ${num(a.mean)}.` +
@@ -153,23 +155,29 @@ export function initExplorer(startUnlocked: boolean): { unlock(): void } {
   };
 
   /** Una iteración en dos tiempos: el oráculo refleja sobre |s'⟩ (φ → −φ) y el difusor sobre |s⟩ (−φ → φ + 2θ). */
+  // Clics durante un paso se ignoran (no se deshabilita el botón: perdería el foco de teclado);
+  // los sliders sí lo interrumpen. El finally deja siempre limpias las clases de fase.
   const step = async () => {
-    if (k >= Number(kInput.max)) return;
+    if (stepping || k >= Number(kInput.max)) return;
+    stepping = true;
     const id = ++token;
     const theta = groverAngle(n);
     const start = (2 * k + 1) * theta;
-    phase.textContent = "1/2 Oráculo: cambia el signo de ω";
-    plot.classList.add("is-oracle");
-    if (!(await tween(-start, 380, id))) return;
-    phase.textContent = "2/2 Difusor: refleja todo respecto a la media";
-    plot.classList.replace("is-oracle", "is-diffusing");
-    if (!(await tween(start + 2 * theta, 420, id))) return;
-    plot.classList.remove("is-diffusing");
-    phase.textContent = "";
-    k += 1;
-    kInput.value = String(k);
-    readout();
-    if (k >= Number(kInput.max)) kInput.focus();
+    try {
+      phase.textContent = "1/2 Oráculo: cambia el signo de ω";
+      plot.classList.add("is-oracle");
+      if (!(await tween(-start, 380, id))) return;
+      phase.textContent = "2/2 Difusor: refleja todo respecto a la media";
+      plot.classList.replace("is-oracle", "is-diffusing");
+      if (!(await tween(start + 2 * theta, 420, id))) return;
+      k += 1;
+      kInput.value = String(k);
+      readout();
+      if (k >= Number(kInput.max)) kInput.focus();
+    } finally {
+      stepping = false;
+      if (id === token) { plot.classList.remove("is-oracle", "is-diffusing"); phase.textContent = ""; }
+    }
   };
 
   nInput.addEventListener("input", () => { syncN(); goTo(k, 260); });

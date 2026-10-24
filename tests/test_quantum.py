@@ -59,3 +59,11 @@ def test_noisy_grover_uses_fake_fez_backend(client):
     assert result.status_code == 200
     assert result.json()["noisy"] is True
     assert "FakeFez" in result.json()["backend"]
+
+
+@pytest.mark.parametrize("n", range(2, 7))
+def test_grover_curve_matches_formula_at_every_k(client, n):
+    data = client.post("/api/quantum/grover-curve", json={"n_qubits": n}).json()
+    theta = math.asin(1 / math.sqrt(2**n))
+    for k, p in zip(data["iterations"], data["probability"]):
+        assert abs(p - math.sin((2 * k + 1) * theta) ** 2) < 1e-12

@@ -2,9 +2,22 @@
 
 Laboratorio web educativo de ciberseguridad cuántica para el IBM Quantum Hackathon / Qiskit Fall Fest 2026 (Lima), reto 5.3 EdTech de IEEE CS PUCP. Público objetivo: personas desde los 14 años, sin conocimientos previos de computación cuántica.
 
-QubitGuard enseña **distribuciones de probabilidad y amplitudes** con una pregunta concreta: ¿cuántos intentos hacen falta para encontrar un secreto? La búsqueda aleatoria clásica espera `(N+1)/2` intentos; el algoritmo de Grover amplifica la amplitud del estado correcto y necesita del orden de `π/4 · √N` iteraciones. El estudiante **predice, ejecuta un circuito real de Qiskit y contrasta** su predicción con la teoría y con mediciones ideales o con ruido.
+QubitGuard enseña **distribuciones de probabilidad y amplitudes** (una amplitud es un número, que puede ser negativo, cuyo cuadrado da la probabilidad) con una pregunta concreta: ¿cuántos intentos hacen falta para encontrar un secreto? La búsqueda aleatoria clásica espera `(N+1)/2` intentos; el algoritmo de Grover amplifica la amplitud del estado correcto y necesita del orden de `π/4 · √N` iteraciones. El estudiante **predice, ejecuta un circuito de Qiskit en un simulador y contrasta** su predicción con la teoría y con mediciones ideales o con ruido.
 
 > **Estado honesto.** Todos los circuitos de la aplicación web se ejecutan en simuladores locales (Qiskit Aer, con el modelo de ruido `FakeFez` como opción). **No se ha ejecutado nada en hardware cuántico real de IBM**: existe un CLI listo para hacerlo ([sección 5](#5-ejecución-en-hardware-cuántico-de-ibm)) pero no hay un solo job enviado. Tampoco se ha hecho todavía un piloto con estudiantes: no afirmamos mejoras de aprendizaje ni retención. QubitGuard es una herramienta didáctica y no ejecuta ataques contra sistemas reales.
+
+## Para el jurado en 3 minutos
+
+```bash
+git clone https://github.com/LeonardoShande/QubitGuard.git && cd QubitGuard
+python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m uvicorn app.main:app --port 8000   # abrir http://127.0.0.1:8000
+```
+
+1. **Laboratorio Grover:** 4 qubits, estado `1010`, predice la probabilidad y ejecuta (óptimo: 3 iteraciones, 96,1 % teórico).
+2. Activa el **ruido FakeFez** y sube a 6 qubits: el éxito cae al nivel del azar.
+3. **Explorador de amplitudes:** mueve `k` y mira cómo gira el estado.
+4. Evidencia y límites: [sección 7](#7-resultados-reproducibles-validación-y-limitaciones); hardware IBM: [sección 5](#5-ejecución-en-hardware-cuántico-de-ibm); guion: [pitch/GUION.md](pitch/GUION.md).
 
 ## Índice
 
@@ -106,7 +119,7 @@ Sección «Explorador de amplitudes» (`#amplitudes`). Mueve **qubits** (2 a 10)
 - las lecturas de **Grover `sin²((2k+1)θ)`** frente al **azar con `k` consultas `k/N`**;
 - un botón **Siguiente iteración** que anima la iteración en dos tiempos (primero el oráculo cambia el signo de `ω`; luego el difusor refleja respecto a la media) y avisa cuando te pasas del óptimo.
 
-El explorador pide antes una predicción: la comparación enseña más cuando hay un compromiso previo. Se puede abrir sin predecir con «Explorar sin predecir». **Lo que calcula son las fórmulas exactas en el navegador; no llama al servidor ni ejecuta un circuito de Qiskit.** La curva de Qiskit (`Statevector`) coincide con esa fórmula entre 2 y 6 qubits con un error máximo de `6,15·10⁻¹⁴` (comprobación de la revisión del 24 de octubre de 2026, con pruebas automáticas), así que laboratorio y explorador cuentan la misma historia. Con movimiento reducido las transiciones saltan al estado final.
+El explorador pide antes una predicción: la comparación enseña más cuando hay un compromiso previo. Se puede abrir sin predecir con «Explorar sin predecir». **Lo que calcula son las fórmulas exactas en el navegador; no llama al servidor ni ejecuta un circuito de Qiskit.** La curva de Qiskit (`Statevector`) coincide con esa fórmula entre 2 y 6 qubits con un error máximo de `6,15·10⁻¹⁴` (cubierto por `test_grover_curve_matches_formula_at_every_k`), así que laboratorio y explorador cuentan la misma historia. Con movimiento reducido las transiciones saltan al estado final.
 
 ### Reto diario, racha, XP y logros
 
@@ -149,7 +162,7 @@ La meta educativa es **128 bits**; la interfaz muestra la mitad como bits efecti
 | `pydantic` | 2.14.1 | Modelos de petición con `extra="forbid"` y rangos acotados. | Rechaza campos inesperados (incluido cualquier campo de contraseña). |
 | `pytest`, `httpx` | 9.1.1, 0.28.1 | Pruebas con `TestClient`. | Sin arrancar Uvicorn por separado. |
 | TypeScript (`tsc`) | 5.9.3, solo desarrollo | Frontend compilado a `frontend/dist/*.js`. | **Sin dependencias de ejecución** ni frameworks: menos superficie, compilación simple, fácil de leer. |
-| `python-pptx` | 1.0.2, opcional | Solo `pitch/build_deck.py`. | No forma parte de la aplicación. |
+| `python-pptx` | 1.0.2, opcional | Solo `pitch/build_deck.py` (`.venv/bin/python -m pip install python-pptx==1.0.2`). | No forma parte de la aplicación. |
 
 Usar Qiskit no es adorno: cada pieza responde a una pregunta pedagógica concreta. El oráculo y el difusor se **construyen y se miden** (entrega la probabilidad real del circuito); `Statevector` da la curva exacta sin ruido de muestreo; `AerSimulator` enseña qué es un *shot*; `FakeFez` y `transpile` enseñan que el coste del circuito crece y que el ruido lo degrada. Lo que no necesita Qiskit (Monte Carlo, el explorador, el análisis de contraseñas) no lo usa.
 
@@ -316,6 +329,8 @@ Medido el **24 de octubre de 2026** con el CLI, `FakeFez` local, 1024 *shots*, `
 
 ---
 
+<a id="instalación-y-ejecución"></a>
+
 ## 6. Instalación, pruebas y despliegue
 
 ### Requisitos
@@ -440,7 +455,11 @@ La URL temporal cambia en cada arranque: sirve para el jurado, no como hosting p
 
 ---
 
+<a id="pruebas-y-resultados-reproducibles"></a>
+
 ## 7. Resultados reproducibles, validación y limitaciones
+
+<a id="api-y-ejemplos"></a>
 
 ### API y comandos exactos
 
@@ -492,7 +511,7 @@ Reproducidos el 24 de octubre de 2026 con los cuerpos anteriores (Qiskit 2.6.1, 
 | Grover ideal: `1010`, 4 qubits, k=3, 2048 *shots*, seed 7 | Éxito medido `0,95263671875`; teórico `0,9613189697265625`; profundidad 172 y 84 puertas de 2 qubits (circuito transpilado a `cx/rz/sx/x`). | Medido. |
 | Grover ruidoso: `101010`, 6 qubits, k=6, 256 *shots*, seed 7 | Éxito `0,03125`; profundidad `4447`; `1706` puertas de 2 qubits; azar `0,015625`. | Medido (simulado). |
 | Monte Carlo: 10 bits, 5000 ensayos, seed 1 | Media `513,281` intentos frente a `512,5` esperados. | Medido. |
-| Curva `Statevector` frente a `sin²((2k+1)θ)`, n=2 a 6, `k=0..2·óptimo` | Error absoluto máximo `6,15·10⁻¹⁴`. | Medido; cubierto por pruebas. |
+| Curva `Statevector` frente a `sin²((2k+1)θ)`, n=2 a 6, `k=0..2·óptimo` | Error absoluto máximo `6,15·10⁻¹⁴`. | Medido; la prueba `test_grover_curve_matches_formula_at_every_k` exige < 10⁻¹². |
 | CLI en FakeFez, n=3 a 6 (sección 5) | 0,802; 0,662; 0,184; 0,0166. | Medido (simulado). |
 | Ejecución en QPU de IBM | Ninguna. | **No realizada.** |
 
@@ -522,7 +541,7 @@ La semilla permite repetir un experimento dentro del mismo entorno. El éxito me
 10. **Despliegue no verificado en servidor:** la imagen Docker no se ha construido y no se ha medido la capacidad con usuarios simultáneos.
 11. **Piloto con usuarios y retención:** pendientes.
 
-Más detalle en [docs/LIMITACIONES.md](docs/LIMITACIONES.md), que también sirve la API en `/api/learn/limitations`.
+Las 8 fichas de `/api/learn/limitations` salen de `app/content/limitations.json`; [docs/LIMITACIONES.md](docs/LIMITACIONES.md) las amplía.
 
 ---
 
@@ -533,7 +552,7 @@ Más detalle en [docs/LIMITACIONES.md](docs/LIMITACIONES.md), que también sirve
 **Seguridad.**
 
 - El servidor publica únicamente `index.html`, `styles.css`, `dist/` y `assets/`, además de la API y su documentación; `/src/`, `/node_modules/` y `/package.json` devuelven 404.
-- Cabeceras: `X-Content-Type-Options`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`, COOP, `Permissions-Policy` y una CSP de mismo origen (con excepciones para estilos inline e imágenes `data:`); `/docs`, `/redoc` y `/openapi.json` quedan fuera de esa CSP. HSTS no se envía porque en local se sirve por HTTP: se añade tras HTTPS o Cloudflare.
+- Cabeceras: `X-Content-Type-Options`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`, COOP, `Permissions-Policy` y una CSP de mismo origen (con excepciones para estilos inline e imágenes `data:`); `/docs`, `/redoc` y `/openapi.json` quedan fuera de esa CSP. El código no envía HSTS porque en local se sirve por HTTP; al publicar por HTTPS hay que activarlo en el borde (Cloudflare) o en el servidor.
 - gzip, caché HTTP para contenido determinista, `no-store` para simulaciones y revalidación con ETag.
 - Límite de 2 simulaciones ruidosas simultáneas por proceso (503 con `Retry-After`). **No hay autenticación ni *rate limiting* por IP**; para una publicación estable configúralo en el borde (ver [docs/DEPLOY.md](docs/DEPLOY.md)).
 - El contenedor Docker corre sin privilegios, con sistema de archivos de solo lectura y sin capabilities.
@@ -584,4 +603,4 @@ Las tarjetas poscuánticas de la aplicación enlazan sus propias fuentes en `app
 | [Encargos para GLM](docs/TAREAS_GLM.md) | Prompts acotados para revisión, guion y comprobaciones. |
 | [Guion del pitch](pitch/GUION.md), [Presentación](pitch/QubitGuard_pitch.pptx) y [Entregables](pitch/ENTREGABLES.md) | Material del hackathon y pendientes. |
 
-Antes de proponer cambios, ejecuta las comprobaciones de Python y frontend. Si modificas TypeScript, incluye el JavaScript recompilado en `frontend/dist/`. Si cambias rutas, límites o supuestos, actualiza la documentación y los ejemplos afectados. `pitch/build_deck.py` regenera la presentación y requiere `python-pptx`, que no forma parte de las dependencias de la aplicación.
+Antes de proponer cambios, ejecuta las comprobaciones de Python y frontend. Si modificas TypeScript, incluye el JavaScript recompilado en `frontend/dist/`. Si cambias rutas, límites o supuestos, actualiza la documentación y los ejemplos afectados. `pitch/build_deck.py` regenera la presentación y requiere `python-pptx` (`.venv/bin/python -m pip install python-pptx==1.0.2`), que no forma parte de las dependencias de la aplicación.

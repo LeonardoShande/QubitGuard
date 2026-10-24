@@ -276,7 +276,7 @@ cd ..
 
 Las pruebas Python usan `TestClient`: no requieren iniciar Uvicorn por separado. `npm test` compila el frontend y ejecuta las pruebas de contraseñas, generación y progreso con `node:test`.
 
-Validación local del **24 de octubre de 2026**: **47 pruebas Python** y **29 pruebas de frontend** aprobadas, además de `npm run check`. Se ejecutaron con Python 3.13.14 y Node.js 24.18.0. Son resultados de esa revisión, no una garantía sobre futuras versiones de dependencias.
+Validación local del **24 de octubre de 2026**: **47 pruebas Python** y **33 pruebas de frontend** aprobadas, además de `npm run check`. Se ejecutaron con Python 3.13.14 y Node.js 24.18.0. Son resultados de esa revisión, no una garantía sobre futuras versiones de dependencias.
 
 Resultados reproducidos con los mismos cuerpos JSON de los ejemplos anteriores, Qiskit 2.6.1, Aer 0.18.0 e IBM Runtime 0.51.0:
 
@@ -360,6 +360,7 @@ Antes de proponer cambios, revisa el contrato de API y ejecuta las comprobacione
 | [Reto y entrega](docs/RETO_Y_ENTREGA.md) | Encaje con los tres retos, nuevo mapeo oficial y cronograma compartido. |
 | [Contrato de API](docs/API.md) | Cuerpos, respuestas y convenciones. |
 | [Despliegue](docs/DEPLOY.md) | Demo pública y configuración de publicación. |
+| [Lubuntu con CasaOS](docs/LUBUNTU_CASAOS.md) | Instalación en la laptop Linux, servicio persistente, LAN, túnel y encargo para GLM MAX. |
 | [Limitaciones](docs/LIMITACIONES.md) | Alcance educativo y supuestos. |
 | [Auditoría UX](frontend/UX_AUDIT.md) | Registro de criterios de interfaz y accesibilidad. |
 | [Guion del pitch](pitch/GUION.md) | Guía de presentación del proyecto. |

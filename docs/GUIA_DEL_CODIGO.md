@@ -124,6 +124,7 @@ Caso límite conocido: con `max_bits=2` o `3`, la API no genera filas. El fronte
 | [`src/api.ts`](../frontend/src/api.ts) | Tipos HTTP, `request`, `ApiError`, caché por sesión y cliente de cada endpoint. | Cuando cambia el contrato de API o la presentación de errores. |
 | [`src/charts.ts`](../frontend/src/charts.ts) | `mount`, `barChart`, `lineChart` y construcción SVG. | Cambios de gráficos, escalas y redimensionamiento. |
 | [`src/dom.ts`](../frontend/src/dom.ts) | Búsqueda por ID (`$`), creación de elementos (`h`), errores y movimiento. | Utilidades pequeñas compartidas de interfaz. |
+| [`src/ambience.ts`](../frontend/src/ambience.ts) | Control del fondo ASCII global, pausa por visibilidad/movimiento reducido y retirada de la entrada IBM. | Solo ambientación y presentación inicial. |
 | [`src/progress.ts`](../frontend/src/progress.ts) | Persistencia, fecha local, XP, niveles, rachas, ruta y logros. | Reglas de progreso y compatibilidad del estado guardado. |
 | [`src/password.ts`](../frontend/src/password.ts) | Analizador puro y formato de tiempos y magnitudes. | Heurísticas y supuestos del cálculo. |
 | [`src/generator.ts`](../frontend/src/generator.ts) | CSPRNG, caracteres, frases y refuerzo de base. | Opciones y distribución del generador. |
@@ -185,7 +186,7 @@ Las cabeceras y el semáforo no aportan autenticación ni un límite global de s
 | `npm run check` | Consistencia de tipos TypeScript sin emitir archivos. |
 | `.github/workflows/ci.yml` | Python 3.13 y Node 24 en Ubuntu; Python excluye `slow`. |
 
-Pruebas locales ejecutadas: 47 Python y 29 frontend, además de tipos. Las tres pruebas nuevas de `dom.test.mjs` verifican interrupción de animaciones, movimiento reducido y ausencia de Web Animations. No son pruebas completas del DOM ni un estudio de aprendizaje. Cuando cambies una ruta, revisa router, cliente TypeScript, consumidor, tests y [API.md](API.md); cuando cambies TypeScript, recompila y versiona `dist/`.
+Pruebas locales ejecutadas: 47 Python y 33 frontend, además de tipos. `dom.test.mjs` verifica interrupción de animaciones, movimiento reducido y ausencia de Web Animations; `ambience.test.mjs` comprueba ocultación del fondo, pausa en segundo plano, movimiento reducido y salida de la entrada IBM. No son pruebas completas del DOM ni un estudio de aprendizaje. Cuando cambies una ruta, revisa router, cliente TypeScript, consumidor, tests y [API.md](API.md); cuando cambies TypeScript, recompila y versiona `dist/`.
 
 Para revisar el motor desde PyCharm, usa como intérprete el entorno que contiene las dependencias, configura `uvicorn` como módulo, `app.main:app --reload` como parámetros y la raíz del repositorio como directorio. Puedes colocar breakpoints en `grover` y `run_grover`, o ejecutar directamente los tests con ese intérprete.
 

@@ -1,0 +1,47 @@
+services:
+  qubitguard:
+    build: .
+    image: qubitguard:local
+    container_name: qubitguard
+    ports:
+      - "8781:8781"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      # Con read_only, cualquier caché que una librería intente escribir en $HOME va a /tmp (tmpfs).
+      HOME: /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Ejemplos conservadores para una laptop pequeña; no son límites medidos.
+    mem_limit: 1g
+    cpus: "2"
+    # El HEALTHCHECK se hereda de la imagen (Dockerfile).
+    x-casaos:
+      ports:
+        - container: "8781"
+          description:
+            en_us: QubitGuard web UI and API
+            es_es: Interfaz web y API de QubitGuard
+
+# Metadatos que lee CasaOS al importar la aplicación.
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: qubitguard
+  title:
+    en_us: QubitGuard
+    es_es: QubitGuard
+  description:
+    en_us: Educational quantum lab comparing Grover search with a classical Monte Carlo search, powered by Qiskit.
+    es_es: Laboratorio educativo que compara la búsqueda de Grover con una búsqueda Monte Carlo clásica, con Qiskit.
+  category: Education
+  port_map: "8781"
+  index: /
+  scheme: http
+  author: LeonardoShande
+  developer: LeonardoShande

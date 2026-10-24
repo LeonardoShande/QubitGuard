@@ -14,6 +14,8 @@ Navegador → dominio HTTPS / Cloudflare Tunnel → laptop Lubuntu:8781
 
 CasaOS puede seguir gestionando tus contenedores. Esta opción ejecuta QubitGuard como servicio nativo de Lubuntu; no necesita convertirlo en un contenedor ni instalar Node en el servidor. El JavaScript compilado ya está en el repositorio.
 
+La sección 7 describe una alternativa con Docker Compose que CasaOS puede gestionar como una aplicación más; elige una de las dos, no ambas.
+
 ## 1 Comprobar la laptop
 
 Ejecuta en una terminal de **Lubuntu**, con tu usuario habitual:
@@ -165,6 +167,113 @@ curl -fsS http://127.0.0.1:8781/api/health
 ```
 
 Si falla una actualización, conserva los logs y vuelve al commit anotado con `git switch --detach COMMIT_ANTERIOR`, reinstala sus dependencias y reinicia el servicio. El marcador se sustituye por el hash real. Esta vuelta atrás de código no garantiza recuperar versiones exactas de Python porque las dependencias tienen rangos; para una publicación estable conviene registrar también las versiones instaladas o conservar el entorno anterior.
+
+## 7 Opción Docker / CasaOS
+
+Esta opción sustituye a las secciones 2, 3, 4 y 6 de esta guía: en vez de crear la `.venv` y un servicio systemd, todo QubitGuard (FastAPI, Qiskit Aer y el frontend ya compilado) corre dentro de un contenedor que Docker Compose reconstruye desde el repositorio. No necesitas Node ni Python en la laptop, solo Docker con el plugin Compose.
+
+> Honestidad sobre el alcance: estos pasos **no se han ejecutado en tu servidor**. Se escribieron en una máquina donde Docker no está instalado, así que la imagen no se ha construido ni arrancado. El `compose.yaml` sí se validó como YAML. Las versiones concretas de Lubuntu, Docker y CasaOS de tu laptop no se han comprobado.
+
+### 7.1 Primera instalación (en la terminal de la laptop)
+
+Instala Docker si aún no lo tienes (una sola vez). Si CasaOS ya funciona en la laptop, Docker ya está instalado y puedes saltar este bloque:
+
+```bash
+sudo apt update
+sudo apt install -y docker.io docker-compose-v2 git curl
+sudo usermod -aG docker "$USER"
+```
+
+Si `docker compose version` falla después de esto (por ejemplo en Lubuntu 22.04, donde el paquete puede no existir), instala el plugin desde el repositorio oficial de Docker: <https://docs.docker.com/engine/install/ubuntu/>.
+
+Cierra sesión y vuelve a entrar para que el grupo `docker` se aplique (o reinicia). Comprueba:
+
+```bash
+docker --version
+docker compose version
+```
+
+Descarga el repositorio y construye:
+
+```bash
+mkdir -p "$HOME/apps"
+git clone https://github.com/LeonardoShande/QubitGuard.git "$HOME/apps/QubitGuard"
+cd "$HOME/apps/QubitGuard"
+docker compose build
+docker compose up -d
+```
+
+Si el checkout ya existía, no lo clones otra vez: `cd "$HOME/apps/QubitGuard" && git pull --ff-only`.
+
+Comprueba que arrancó y que la API responde:
+
+```bash
+docker compose ps
+curl -s http://127.0.0.1:8781/api/health
+```
+
+`docker compose ps` debe mostrar `qubitguard` en estado `running` (o `healthy` tras unos segundos). La respuesta esperada de `curl` es un JSON con `"status":"ok"`. En la propia laptop abre `http://127.0.0.1:8781`; desde otra computadora de la misma red, `http://IP_PRIVADA_DE_LA_LAPTOP:8781` (obtén la IP con `hostname -I`). La aplicación no tiene autenticación: úsala en una red de confianza y no abras puertos del router para ella.
+
+Notas sobre la imagen:
+
+- Se construye sobre `python:3.13-slim`, instala `requirements.txt` y copia solo `app/` y los archivos del frontend que el navegador usa (`index.html`, `styles.css`, `dist/`, `assets/`). `frontend/src/` y `frontend/node_modules/` quedan fuera por `.dockerignore`; el JavaScript compilado ya está versionado.
+- Corre como usuario sin privilegios, con sistema de archivos de solo lectura y sin capabilities (`read_only`, `cap_drop: [ALL]`, `no-new-privileges`). Los límites `mem_limit: 1g` y `cpus: "2"` del `compose.yaml` son ejemplos conservadores, no valores medidos.
+- El `HEALTHCHECK` está en el `Dockerfile` (usa `urllib` porque la imagen slim no trae `curl`).
+- La imagen no incluye `scripts/` ni guarda credenciales de IBM Quantum: para ejecutar contra hardware real sigue usando la instalación nativa de esta guía.
+
+### 7.2 Gestionarlo desde CasaOS
+
+Que CasaOS muestre un stack arrancado desde la terminal depende de su versión: algunas solo gestionan las aplicaciones instaladas desde su propio panel. Hay dos caminos; ninguno se ha probado en tu servidor.
+
+**A. Terminal (fiable):** con `docker compose up -d` del paso 7.1 la aplicación ya funciona en `http://IP_PRIVADA:8781`, aparezca o no en el panel. Se controla con los comandos del paso 7.3.
+
+**B. Panel de CasaOS (para verla y controlarla ahí):**
+
+1. Construye la imagen una vez desde la terminal: `docker compose build`. Esto deja la imagen local `qubitguard:local`.
+2. Si la arrancaste en el paso 7.1, detenla para liberar el puerto: `docker compose down`.
+3. En CasaOS abre **App Store → Custom Install** (en algunas versiones, el botón **+** → *Install a customized app*) y elige **Import**.
+4. Pega el contenido de `compose.yaml` **quitando la línea `build: .`**. CasaOS no compila código: usará la imagen `qubitguard:local` que ya existe en la máquina.
+5. Instala. QubitGuard aparece en el panel con su puerto 8781 y desde ahí se abre, se detiene o se reinicia.
+
+Para actualizar por el camino B: `git pull && docker compose build` en la terminal y después reinicia la app desde CasaOS.
+
+### 7.3 Actualizar, ver logs y detener
+
+```bash
+cd "$HOME/apps/QubitGuard"
+git status --short          # debe estar vacío o solo con cambios propios
+git pull --ff-only
+docker compose up -d --build
+docker compose logs -f       # Ctrl+C para salir de los logs, no detiene el contenedor
+docker compose down          # detiene y elimina el contenedor; la imagen queda
+```
+
+`up -d --build` reconstruye la imagen con el código nuevo y recrea el contenedor. Para volver a un commit anterior: `git switch --detach COMMIT_ANTERIOR`, luego `docker compose up -d --build` (el marcador se sustituye por el hash real).
+
+### 7.4 Publicar con Cloudflare Tunnel
+
+Con el contenedor en marcha, el destino del túnel es `http://localhost:8781` si `cloudflared` corre en la laptop de forma nativa o en un contenedor con red host. Si `cloudflared` corre en otro contenedor con red bridge, `localhost` apunta al propio contenedor: usa `http://IP_PRIVADA_DE_LA_LAPTOP:8781`.
+
+Añade **solo una ruta nueva** al túnel existente (por ejemplo `qubitguard.tudominio.com`) y conserva las rutas de los demás servicios. Prueba temporal, si ya tienes `cloudflared`:
+
+```bash
+cloudflared tunnel --url http://localhost:8781
+```
+
+La URL temporal cambia al reiniciar y no sirve para una demo estable. **No expongas el panel de administración de CasaOS** (ni su puerto) a través del túnel: solo el puerto 8781 de QubitGuard. QubitGuard no implementa autenticación, así que cualquiera con el dominio puede usarlo y consumir CPU simulando circuitos.
+
+### 7.5 Problemas frecuentes
+
+| Síntoma | Qué revisar |
+|---|---|
+| `port is already allocated` / puerto ocupado | Ya hay algo escuchando en 8781 (`ss -ltn \| grep ':8781'`). Detén el servicio systemd antiguo (`sudo systemctl disable --now qubitguard.service`) o el proceso manual antes de usar Docker. |
+| El contenedor arranca y se reinicia | `docker compose logs --tail=100 qubitguard`; suele ser una dependencia que no se instaló o el puerto tomado dentro del contenedor. |
+| `docker compose ps` dice `unhealthy` | Espera el `start-period` (30 s) y prueba `docker compose exec qubitguard python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8781/api/health').status)"`. |
+| La página no carga pero la API sí | Comprueba que `frontend/index.html` y `frontend/dist/` están en la imagen: `docker compose exec qubitguard ls frontend`. |
+| La build tarda mucho o se queda sin memoria | Compilar es sobre todo descargar e instalar ruedas de Qiskit y Aer (cientos de MB). La primera build puede tardar varios minutos. |
+| Arquitectura ARM (laptop ARM) frente a x86 | Qiskit Aer publica ruedas `manylinux` para CPython 3.13 en `x86_64` **y** `aarch64` (verificado en PyPI para qiskit-aer 0.18.0), así que no debería compilar desde fuente. Si tu CPU no es ninguna de esas dos, la build intentaría compilar y necesitaría más tiempo, memoria y herramientas de C++. |
+
+El límite de dos simulaciones ruidosas simultáneas es por proceso y aquí hay un solo worker; con varias personas usando la demo a la vez, unas pueden recibir `503 SimulatorBusy`. No se ha medido la capacidad con usuarios simultáneos.
 
 ## Encargo concreto para GLM 5.3 MAX
 

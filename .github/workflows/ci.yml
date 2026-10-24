@@ -34,3 +34,4 @@ jobs:
           restore-keys: npm-${{ runner.os }}-
       - run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - run: npx tsc --noEmit
+      - run: npm test

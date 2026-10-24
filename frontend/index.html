@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QubitGuard: laboratorio cuántico</title>
+  <meta name="description" content="Laboratorio educativo de ciberseguridad cuántica: búsqueda aleatoria Monte Carlo frente al algoritmo de Grover con Qiskit.">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%2346d9e8' stroke-width='2.5'/%3E%3Ccircle cx='21' cy='11' r='3' fill='%23ea6bbd'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="dist/main.js"></script>
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+
+  <header class="top">
+    <div class="top__bar wrap">
+      <a class="brand" href="#inicio" aria-label="QubitGuard, ir al inicio">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10" /><circle class="brand__dot" cx="23" cy="9" r="3.5" /></svg>
+        <span>QubitGuard</span>
+      </a>
+      <div class="hud" aria-label="Tu progreso">
+        <div class="hud__level">
+          <span class="hud__lv">Nivel <b id="hud-level">1</b></span>
+          <span class="hud__name" id="hud-name">Aprendiz de qubits</span>
+        </div>
+        <div class="xpbar" id="hud-xpbar" role="progressbar" aria-label="Experiencia hacia el siguiente nivel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span class="xpbar__fill" id="hud-xpfill"></span>
+        </div>
+        <span class="hud__xp"><b id="hud-xp">0</b> XP</span>
+        <span class="hud__streak" title="Días seguidos resolviendo el reto"><b id="hud-streak">0</b> <span id="hud-streak-unit">días</span> de racha</span>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Secciones">
+      <ul class="nav__list wrap">
+        <li><a href="#reto">Reto diario</a></li>
+        <li><a href="#laboratorio">Laboratorio Grover</a></li>
+        <li><a href="#azar">Azar frente a Grover</a></li>
+        <li><a href="#contrasena">Tu contraseña</a></li>
+        <li><a href="#poscuantica">Poscuántica</a></li>
+        <li><a href="#limites">Limitaciones</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="contenido">
+    <section class="hero wrap" id="inicio" aria-labelledby="hero-title">
+      <div class="hero__copy">
+        <h1 id="hero-title">Probar llaves al azar o amplificar la correcta</h1>
+        <p class="lead">Un buscador clásico que no sabe nada del secreto necesita, en promedio, <span class="mono">(N+1)/2</span> intentos. El algoritmo de Grover lo encuentra en unas <span class="mono">π/4·√N</span> iteraciones. Aquí lo compruebas con circuitos de Qiskit, simulados con y sin ruido.</p>
+      </div>
+      <div class="race" aria-labelledby="race-title">
+        <h2 class="race__title" id="race-title">Si el secreto tiene <output id="race-bits-out" for="race-bits">40</output> bits</h2>
+        <label class="visually-hidden" for="race-bits">Tamaño del secreto en bits</label>
+        <input class="range" type="range" id="race-bits" min="2" max="128" step="1" value="40">
+        <dl class="race__grid">
+          <div class="race__row">
+            <dt>Posibilidades <span class="mono">N = 2ⁿ</span></dt>
+            <dd class="mono" id="race-n">—</dd>
+          </div>
+          <div class="race__row race__row--classic">
+            <dt>Intentos al azar <span class="mono">(N+1)/2</span></dt>
+            <dd class="mono" id="race-classic">—</dd>
+          </div>
+          <div class="race__row race__row--quantum">
+            <dt>Iteraciones de Grover <span class="mono">π/4·√N</span></dt>
+            <dd class="mono" id="race-grover">—</dd>
+          </div>
+        </dl>
+        <p class="race__note" id="race-note"></p>
+      </div>
+    </section>
+
+    <section class="section wrap" id="reto" aria-labelledby="reto-title">
+      <div class="section__head">
+        <h2 id="reto-title">Reto diario</h2>
+        <p class="section__sub">Una pregunta nueva cada día (hora UTC). Acertar da 50 XP y mantener la racha suma un extra.</p>
+      </div>
+      <div class="panel challenge" id="challenge" aria-busy="true">
+        <p class="state" id="challenge-state" role="status">Cargando el reto de hoy…</p>
+        <div id="challenge-body" hidden>
+          <p class="challenge__meta mono"><span id="challenge-date"></span> <span id="challenge-n"></span></p>
+          <p class="challenge__q" id="challenge-q"></p>
+          <div class="options" id="challenge-options" role="group" aria-labelledby="challenge-q"></div>
+          <div class="feedback" id="challenge-feedback" aria-live="polite"></div>
+        </div>
+        <dl class="stats">
+          <div><dt>Racha actual</dt><dd class="mono" id="stat-streak">0</dd></div>
+          <div><dt>Mejor racha</dt><dd class="mono" id="stat-best">0</dd></div>
+          <div><dt>XP total</dt><dd class="mono" id="stat-xp">0</dd></div>
+          <div><dt>Siguiente nivel</dt><dd class="mono" id="stat-next">—</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="section wrap" id="laboratorio" aria-labelledby="lab-title">
+      <div class="section__head">
+        <h2 id="lab-title">Laboratorio Grover</h2>
+        <p class="section__sub">Elige cuántos qubits usar y qué estado esconder. Qiskit construye el oráculo, aplica las iteraciones y mide.</p>
+      </div>
+      <div class="lab">
+        <form class="panel controls" id="lab-form" novalidate>
+          <div class="field">
+            <label for="lab-n">Qubits <output class="mono" id="lab-n-out" for="lab-n">4</output></label>
+            <input class="range" type="range" id="lab-n" min="2" max="6" step="1" value="4" aria-describedby="lab-n-hint">
+            <p class="hint" id="lab-n-hint"><span id="lab-N">16</span> estados posibles</p>
+          </div>
+          <div class="field">
+            <label for="lab-marked">Estado marcado</label>
+            <div class="inline">
+              <input class="input mono" type="text" id="lab-marked" value="1011" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="4" pattern="[01]{4}" required aria-describedby="lab-marked-hint">
+              <button class="btn btn--ghost" type="button" id="lab-random">Aleatorio</button>
+            </div>
+            <p class="hint" id="lab-marked-hint">Exactamente <span id="lab-bits">4</span> bits, solo 0 y 1. El bit de la izquierda es el más significativo.</p>
+          </div>
+          <div class="field">
+            <span class="label" id="lab-iter-label">Iteraciones</span>
+            <label class="check">
+              <input type="checkbox" id="lab-auto" checked>
+              <span>Usar el óptimo (<span class="mono" id="lab-opt">3</span>)</span>
+            </label>
+            <label class="visually-hidden" for="lab-iter">Iteraciones manuales</label>
+            <input class="input mono" type="number" id="lab-iter" min="0" max="20" step="1" value="3" disabled aria-describedby="lab-iter-label">
+          </div>
+          <div class="field">
+            <label for="lab-shots">Disparos (shots)</label>
+            <input class="input mono" type="number" id="lab-shots" min="1" max="8192" step="1" value="1024" required>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="lab-noisy" role="switch" aria-describedby="lab-noisy-hint">
+            <span class="switch__track" aria-hidden="true"></span>
+            <span>Ruido de un procesador IBM (FakeFez)</span>
+          </label>
+          <p class="hint" id="lab-noisy-hint">Simula los errores de un chip real de 156 qubits. No usa hardware físico.</p>
+          <p class="error" id="lab-error" role="alert"></p>
+          <button class="btn btn--primary" type="submit" id="lab-run">Ejecutar circuito</button>
+        </form>
+
+        <div class="lab__out">
+          <p class="state" id="lab-state" role="status">Ejecuta el circuito para ver qué mide el simulador.</p>
+          <figure class="panel figure">
+            <figcaption>Resultados de la medición</figcaption>
+            <div class="chart" id="lab-hist"></div>
+            <p class="caption-note" id="lab-hist-note"></p>
+          </figure>
+          <dl class="metrics" id="lab-metrics">
+            <div><dt>Probabilidad medida</dt><dd class="mono" id="m-measured">—</dd></div>
+            <div><dt>Probabilidad teórica</dt><dd class="mono" id="m-theory">—</dd></div>
+            <div><dt>Iteraciones (óptimas)</dt><dd class="mono" id="m-iters">—</dd></div>
+            <div><dt>Profundidad</dt><dd class="mono" id="m-depth">—</dd></div>
+            <div><dt>Puertas de 2 qubits</dt><dd class="mono" id="m-2q">—</dd></div>
+            <div><dt>Backend</dt><dd class="mono" id="m-backend">—</dd></div>
+          </dl>
+          <figure class="panel figure">
+            <figcaption>Probabilidad de acertar según las iteraciones: <span class="mono">sin²((2k+1)·θ)</span></figcaption>
+            <div class="chart" id="lab-curve"></div>
+            <p class="caption-note" id="lab-curve-note">Pasarse de iteraciones también empeora el resultado: la amplitud gira de más.</p>
+          </figure>
+          <details class="panel circuit">
+            <summary>Ver el circuito</summary>
+            <pre class="mono" id="lab-circuit" tabindex="0" aria-label="Diagrama del circuito en texto">Todavía no hay circuito. Ejecuta uno.</pre>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="azar" aria-labelledby="azar-title">
+      <div class="section__head">
+        <h2 id="azar-title">Azar frente a Grover</h2>
+        <p class="section__sub">El mismo problema visto desde la estadística y desde la física.</p>
+      </div>
+      <div class="mapping">
+        <div class="mapping__col">
+          <h3>Búsqueda Monte Carlo</h3>
+          <p>Pruebas candidatos al azar sin repetir. El número de intentos es una variable aleatoria uniforme entre 1 y N, así que su esperanza es <span class="mono">(N+1)/2</span>. Duplicar N duplica el trabajo.</p>
+        </div>
+        <div class="mapping__col mapping__col--q">
+          <h3>Amplificación de amplitud</h3>
+          <p>Grover empieza con todos los estados a la vez, con amplitud <span class="mono">1/√N</span>. Cada iteración gira el vector un ángulo <span class="mono">2θ</span> hacia la respuesta, con <span class="mono">θ = asin(1/√N)</span>. Basta con <span class="mono">π/4·√N</span> giros: cuadruplicar N solo duplica el trabajo.</p>
+        </div>
+      </div>
+
+      <div class="duo">
+        <div class="panel">
+          <h3>Simula la búsqueda al azar</h3>
+          <form class="row-form" id="mc-form" novalidate>
+            <div class="field">
+              <label for="mc-bits">Bits del secreto</label>
+              <input class="input mono" type="number" id="mc-bits" min="2" max="20" step="1" value="6" required>
+            </div>
+            <div class="field">
+              <label for="mc-trials">Repeticiones</label>
+              <input class="input mono" type="number" id="mc-trials" min="1" max="5000" step="1" value="1000" required>
+            </div>
+            <button class="btn btn--primary" type="submit" id="mc-run">Simular</button>
+          </form>
+          <p class="error" id="mc-error" role="alert"></p>
+          <p class="state" id="mc-state" role="status">Cada repetición esconde un secreto nuevo y cuenta cuántos intentos hacen falta.</p>
+          <div class="chart" id="mc-hist"></div>
+          <p class="legend" id="mc-legend" hidden><span class="key key--mean"></span>Media medida <b class="mono" id="mc-mean"></b> <span class="key key--exp"></span>Esperada (N+1)/2 <b class="mono" id="mc-exp"></b></p>
+        </div>
+
+        <div class="panel">
+          <h3>Cómo crece cada búsqueda</h3>
+          <form class="row-form" id="cmp-form" novalidate>
+            <div class="field">
+              <label for="cmp-max">Hasta cuántos bits</label>
+              <input class="input mono" type="number" id="cmp-max" min="2" max="256" step="1" value="128" required>
+            </div>
+            <button class="btn btn--ghost" type="submit" id="cmp-run">Actualizar</button>
+          </form>
+          <p class="error" id="cmp-error" role="alert"></p>
+          <p class="state" id="cmp-state" role="status">Cargando la comparación…</p>
+          <div class="chart" id="cmp-chart"></div>
+          <p class="legend" id="cmp-legend" hidden><span class="key key--classic"></span>Intentos clásicos esperados <span class="key key--grover"></span>Iteraciones de Grover <span class="legend__note">(escala logarítmica)</span></p>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabla de intentos clásicos frente a iteraciones de Grover">
+            <table class="table" id="cmp-table">
+              <thead><tr><th scope="col">Bits</th><th scope="col">Intentos clásicos</th><th scope="col">Iteraciones Grover</th><th scope="col">Ventaja</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="contrasena" aria-labelledby="pw-title">
+      <div class="section__head">
+        <h2 id="pw-title">¿Qué tan segura es mi contraseña?</h2>
+        <p class="section__sub">Estimamos su entropía y cuánto tardaría un ataque de fuerza bruta clásico frente al límite teórico de Grover.</p>
+      </div>
+      <div class="panel pw">
+        <p class="privacy" id="pw-privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3Z"/></svg>Tu contraseña nunca sale de este navegador. No se envía, no se guarda y desaparece al recargar.</p>
+        <div class="pw__inputs">
+          <div class="field">
+            <label for="pw-input">Contraseña a analizar</label>
+            <div class="inline">
+              <input class="input mono" type="password" id="pw-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="pw-privacy">
+              <button class="btn btn--ghost" type="button" id="pw-toggle" aria-pressed="false" aria-controls="pw-input">Mostrar</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="pw-rate">Intentos por segundo del atacante</label>
+            <input class="input mono" type="text" id="pw-rate" value="1e10" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="pw-rate-hint">
+            <p class="hint" id="pw-rate-hint">1e10 es una granja de GPU contra un hash rápido. Acepta notación como 1e12.</p>
+          </div>
+        </div>
+        <div class="pw__out" aria-live="polite">
+          <div class="meter" aria-hidden="true"><span class="meter__fill" id="pw-meter"></span></div>
+          <p class="pw__verdict"><b id="pw-strength">Sin analizar</b> <span class="mono" id="pw-bits"></span></p>
+          <dl class="metrics metrics--pw">
+            <div><dt>Longitud</dt><dd class="mono" id="pw-len">0</dd></div>
+            <div><dt>Alfabeto detectado</dt><dd class="mono" id="pw-alpha">—</dd></div>
+            <div><dt>Entropía bruta</dt><dd class="mono" id="pw-raw">—</dd></div>
+            <div><dt>Ataque clásico promedio</dt><dd class="mono" id="pw-classic">—</dd></div>
+            <div><dt>Grover ideal</dt><dd class="mono" id="pw-grover">—</dd></div>
+            <div><dt>Iteraciones de Grover</dt><dd class="mono" id="pw-giter">—</dd></div>
+          </dl>
+          <ul class="penalties" id="pw-penalties"></ul>
+        </div>
+        <p class="note">El tiempo de Grover es un límite teórico idealizado: supone un computador cuántico tolerante a fallos que evalúa el hash dentro del circuito a la misma velocidad que el atacante clásico. Hoy no existe hardware capaz de hacerlo. Aun así, la regla práctica es la misma: Grover reduce a la mitad los bits efectivos, así que una buena contraseña o clave debe ser larga.</p>
+      </div>
+    </section>
+
+    <section class="section wrap" id="poscuantica" aria-labelledby="pqc-title">
+      <div class="section__head">
+        <h2 id="pqc-title">Criptografía poscuántica</h2>
+        <p class="section__sub">Qué algoritmos están en riesgo, ante qué ataque y con qué se reemplazan.</p>
+      </div>
+      <p class="state" id="pqc-state" role="status">Cargando…</p>
+      <div class="cards" id="pqc-cards"></div>
+    </section>
+
+    <section class="section wrap" id="limites" aria-labelledby="lim-title">
+      <div class="section__head">
+        <h2 id="lim-title">Lo que esta demo no demuestra</h2>
+        <p class="section__sub">Límites honestos de la simulación y del algoritmo.</p>
+      </div>
+      <p class="state" id="lim-state" role="status">Cargando…</p>
+      <ul class="limits" id="lim-list"></ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <p><b>QubitGuard</b>, laboratorio educativo para el IBM Quantum Hackathon, Qiskit Fall Fest 2026 en Lima.</p>
+      <p>Hecho con <a href="https://www.ibm.com/quantum/qiskit">Qiskit</a>, <a href="https://github.com/Qiskit/qiskit-aer">Qiskit Aer</a>, el modelo de ruido FakeFez de <a href="https://github.com/Qiskit/qiskit-ibm-runtime">qiskit-ibm-runtime</a> y <a href="https://fastapi.tiangolo.com/">FastAPI</a>. Todas las ejecuciones son simulaciones.</p>
+      <p><a href="https://github.com/LeonardoShande/QubitGuard">Código fuente en GitHub</a></p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

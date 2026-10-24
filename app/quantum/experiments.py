@@ -119,7 +119,9 @@ def run_grover(
         raise ValueError("noisy must be a boolean")
     circuit, iterations = build_grover_circuit(n_qubits, marked_state, iterations)
     simulator = _noisy_backend() if noisy else AerSimulator(seed_simulator=seed)
-    compiled = transpile(circuit, simulator, seed_transpiler=seed, optimization_level=3 if noisy else 1)
+    # Aer ejecuta mcx de forma nativa; la base cx/rz/sx/x hace que depth y two_qubit_gates sean comparables con FakeFez.
+    target = {"backend": simulator} if noisy else {"basis_gates": ["cx", "rz", "sx", "x"]}
+    compiled = transpile(circuit, **target, seed_transpiler=seed, optimization_level=3 if noisy else 1)
     raw_counts = simulator.run(compiled, shots=shots, seed_simulator=seed).result().get_counts(compiled)
     counts = {state: int(raw_counts[state]) for state in sorted(raw_counts)}
     return {

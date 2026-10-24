@@ -16,3 +16,5 @@ dist/
 node_modules/
 # El JS compilado se versiona para que la demo arranque sin Node.
 !frontend/dist/
+# Salidas del CLI de IBM (scripts/run_ibm_hardware.py)
+results/

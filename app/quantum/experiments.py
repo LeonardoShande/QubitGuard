@@ -229,7 +229,8 @@ def montecarlo(n_bits: int = 4, trials: int = 1000, seed: int | None = None) -> 
 @lru_cache(maxsize=32)
 def _compare_cached(max_bits: int) -> dict[str, Any]:
     _validate_integer("max_bits", max_bits, 2, 256)
-    bits_values = sorted(set(range(4, max_bits + 1, 4)) | {bits for bits in (128, 256) if bits <= max_bits})
+    # Siempre incluye el tamaño pedido: con max_bits=2 o 3 la tabla ya no queda vacía.
+    bits_values = sorted(set(range(4, max_bits + 1, 4)) | {bits for bits in (128, 256) if bits <= max_bits} | {max_bits})
     rows = []
     for bits in bits_values:
         N = 2 ** bits

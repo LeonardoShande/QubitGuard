@@ -48,12 +48,12 @@ Búsqueda aleatoria sin repetición de un secreto entre N = 2^n_bits (numpy). Re
 - `seed`: `null` o entero entre 0 y `2^32 - 1`. Se muestrea la posición uniforme del secreto; no se prueban todas las claves de forma explícita.
 
 ## GET /api/quantum/compare?max_bits=40
-`max_bits` 2..256. Filas cada 4 bits más 128 y 256 si caben:
+`max_bits` 2..256. Filas cada 4 bits, más 128 y 256 si caben, y siempre el propio `max_bits`:
 ```json
 {"rows": [{"bits": 8, "N": 256, "classical_expected": 128.5, "grover_iterations": 12, "speedup": 10.7}]}
 ```
 `N`, `classical_expected` y `grover_iterations` pueden ser floats grandes (usar notación científica en la UI).
-`speedup` expresa una razón de consultas, no tiempo medido. Caso límite conocido: `max_bits=2` y `3` devuelven `{"rows":[]}`; ver la [revisión y mejora propuesta](REVISION_PROMPT_Y_BASES.md#mejoras-priorizadas).
+`speedup` expresa una razón de consultas, no tiempo medido.
 
 ## GET /api/learn/pqc
 ```text

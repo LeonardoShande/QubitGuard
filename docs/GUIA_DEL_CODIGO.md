@@ -114,7 +114,7 @@ Devuelve media medida, media esperada `(N+1)/2` e histograma. Hasta 64 candidato
 
 `compare` extrapola fórmulas hasta 256 bits y calcula la razón entre intentos clásicos esperados e iteraciones de Grover. El campo `speedup` es esa razón, **no una aceleración de tiempo medida**. En tamaños grandes se usan flotantes para presentar magnitudes; no representan conteos enteros exactos de ejecución.
 
-Caso límite conocido: con `max_bits=2` o `3`, la API no genera filas. El frontend muestra una explicación, vacía la tabla y retira el observador del gráfico anterior para que no reaparezca al redimensionar. La ampliación del conjunto de filas del backend sigue siendo una mejora propuesta.
+La tabla siempre incluye el `max_bits` pedido, así que `max_bits=2` o `3` devuelven una fila. El frontend conserva su estado vacío por si una respuesta llega sin filas.
 
 ## Frontend por módulos
 

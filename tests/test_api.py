@@ -83,3 +83,9 @@ def test_oversized_seed_rejected_in_library():
     from app.quantum import experiments
     with pytest.raises(ValueError):
         experiments.run_grover(n_qubits=2, marked_state="01", seed=2**63)
+
+
+def test_compare_includes_requested_size(client):
+    for max_bits in (2, 3, 41):
+        bits = [row["bits"] for row in client.get("/api/quantum/compare", params={"max_bits": max_bits}).json()["rows"]]
+        assert bits and bits[-1] == max_bits

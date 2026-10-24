@@ -29,6 +29,7 @@
 html { scroll-behavior: smooth; scroll-padding-top: 8rem; -webkit-text-size-adjust: 100%; scrollbar-color: var(--edge) var(--bg); }
 ::selection { background: rgba(70, 217, 232, 0.35); color: #fff; }
 body {
+  isolation: isolate;
   margin: 0;
   background: var(--bg);
   color: var(--text);
@@ -59,6 +60,41 @@ legend { padding: 0; }
 }
 .skip:focus { top: 8px; }
 .skip:hover { color: #031014; }
+
+/* ASCII global: una textura local movida por el compositor, sin dibujar por frame. */
+.quantum-backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.quantum-backdrop__matrix {
+  position: absolute; inset: -80px; opacity: 0.17;
+  background: url("assets/quantum-ascii.svg") repeat center / 720px 440px;
+  animation: quantum-drift 32s cubic-bezier(0.77, 0, 0.175, 1) infinite alternate paused;
+}
+.quantum-backdrop.is-animated .quantum-backdrop__matrix { animation-play-state: running; }
+@keyframes quantum-drift { to { transform: translate3d(48px, -48px, 0); } }
+.ascii-toggle {
+  margin-left: auto; min-height: 36px; padding: 0.35rem 0.6rem;
+  border: 1px solid var(--edge); border-radius: 4px; background: var(--panel); color: var(--text);
+  font-size: 0.75rem; cursor: pointer;
+}
+.ascii-toggle span { color: var(--cyan); margin-left: 0.4rem; }
+.ascii-toggle[aria-pressed="false"] span { color: var(--muted); }
+.ibm-intro { display: none; }
+.ibm-intro__content { text-align: center; padding: 1.5rem; }
+.ibm-intro__letters { margin: 0; color: var(--text); font: 600 clamp(0.65rem, 2.7vw, 1.75rem)/1.35 var(--mono); }
+.ibm-intro__qiskit { color: var(--cyan); margin-block: 1.5rem 0.65rem; font-size: clamp(0.875rem, 2vw, 1.1rem); }
+.ibm-intro__content > p:last-child { color: var(--muted); font-size: 0.75rem; }
+body:focus-within .ibm-intro { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .ibm-intro { display: grid; place-items: center; position: fixed; inset: 0; z-index: 45; background: var(--bg); pointer-events: none; animation: ibm-intro 2200ms var(--ease) both; }
+  .ibm-intro__letters { animation: ibm-letters 2200ms var(--ease) both; }
+}
+@keyframes ibm-letters {
+  0% { opacity: 0; transform: translateY(8px); }
+  24%, 100% { opacity: 1; transform: none; }
+}
+@keyframes ibm-intro {
+  0%, 66% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
 
 .wrap { width: 100%; max-width: 1240px; margin-inline: auto; padding-inline: 20px; }
 @media (min-width: 768px) { .wrap { padding-inline: 28px; } }
@@ -96,10 +132,8 @@ legend { padding: 0; }
 .nav__list a[aria-current] { color: var(--text); border-bottom-color: var(--cyan); }
 
 /* Hero ----------------------------------------------------------------- */
-.hero { position: relative; isolation: isolate; display: grid; gap: 2rem; padding-block: 1.75rem 3.5rem; align-items: center; }
+.hero { position: relative; display: grid; gap: 2rem; padding-block: 1.75rem 3.5rem; align-items: center; }
 .hero > * { min-width: 0; }
-.hero__field { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 70%, transparent); }
-.ascii-field { position: absolute; left: 42%; top: 9%; margin: 0; color: #46d9e8; opacity: 0.11; font: 400 clamp(12px, 1.4vw, 18px)/2 var(--mono); letter-spacing: 0.22em; user-select: none; }
 .hero__event { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 2rem; color: var(--muted); font: 400 0.75rem/1.6 var(--mono); padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
 .hero__event a { color: var(--text); text-decoration: none; }
 .hero__event a:hover { text-decoration: underline; }
@@ -119,10 +153,8 @@ legend { padding: 0; }
 @media (prefers-reduced-motion: no-preference) {
   .hero__copy { animation: arrive 500ms var(--ease) both; }
   .race { animation: arrive 500ms 80ms var(--ease) both; }
-  .ascii-field { animation: ascii-arrive 2400ms var(--ease) both; }
 }
 @keyframes arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@keyframes ascii-arrive { from { opacity: 0; transform: translateX(24px); } to { opacity: 0.11; transform: none; } }
 
 .race {
   position: relative; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line-2); border-radius: 12px;
@@ -536,6 +568,7 @@ select.input { appearance: auto; }
 .toast.is-on { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
+  .quantum-backdrop__matrix { animation: none; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
   .btn.is-busy::before { animation: none; border-right-color: currentColor; opacity: 0.6; }

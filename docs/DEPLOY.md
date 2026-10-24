@@ -1,5 +1,7 @@
 # Despliegue y seguridad
 
+Para la laptop del usuario con **Lubuntu y CasaOS**, sigue la [guía específica con servicio systemd, acceso LAN y túnel](LUBUNTU_CASAOS.md). Incluye un prompt acotado para GLM 5.3 MAX.
+
 QubitGuard corre como un solo proceso (FastAPI sirve la API y el frontend). Qiskit Aer necesita CPU y librerías nativas, así que no encaja en Cloudflare Workers; la forma recomendada de publicar la demo es dejar el servidor en una máquina propia y exponerlo con **Cloudflare Tunnel**, sin abrir puertos.
 
 ## Demo pública rápida (sin cuenta)

@@ -52,6 +52,12 @@ El anillo de foco (2 px `--cyan`, separado 2 px) tiene al menos 9,88:1 frente a 
 
 Estas comprobaciones no certifican WCAG ni garantizan FPS en teléfonos reales. El rendimiento de movimiento se verificó por las propiedades animadas y la ausencia de bucles de renderizado; no se hizo un perfil en hardware móvil.
 
+## Actualización del fondo global y la entrada IBM
+
+Por petición explícita del usuario, el motivo limitado a la portada se sustituyó por una textura ASCII fija en toda la página, con circuitos y referencias a Qiskit/IBM Quantum. La textura es un SVG local repetido; una transformación CSS alterna lentamente cada 32 s. El botón ASCII permite ocultarla, y el movimiento se pausa con la pestaña oculta o la preferencia de movimiento reducido. Los paneles de datos mantienen sus superficies opacas.
+
+La entrada muestra IBM en ASCII y se retira a los 2,2 s o con Escape. El foco en un control la oculta inmediatamente; con movimiento reducido se omite. No bloquea los eventos de puntero ni añade un diálogo o una trampa de foco. Cuatro pruebas del módulo de ambientación elevan la suite de frontend a 33. No se modificaron experimentos, formularios ni reglas educativas en esta actualización.
+
 ## Fuera de alcance
 
 - Lazy-render con IntersectionObserver: no se implementó. Las secciones lejanas son texto y dos GET pequeños que ya se piden una sola vez, así que no hay una mejora medible que justifique la complejidad.

@@ -4,6 +4,7 @@ import { $, fieldError, h, motion } from "./dom.js";
 import { formatPow10 } from "./password.js";
 import { initPasswordUI } from "./password-ui.js";
 import * as progress from "./progress.js";
+import { initAmbience } from "./ambience.js";
 // Utilidades -------------------------------------------------------------
 /** Segundos que pide esperar el servidor (Retry-After de un 503), o 0. */
 const retryWait = (err) => (err instanceof ApiError ? err.retryAfter : 0);
@@ -784,6 +785,7 @@ function initNav() {
     }, { rootMargin: "-40% 0px -60% 0px" });
     sections.forEach((s) => io.observe(s));
 }
+initAmbience();
 renderHud();
 renderPath();
 renderAchievements();

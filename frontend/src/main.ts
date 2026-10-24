@@ -4,6 +4,7 @@ import { $, fieldError, h, motion } from "./dom.js";
 import { formatPow10 } from "./password.js";
 import { initPasswordUI } from "./password-ui.js";
 import * as progress from "./progress.js";
+import { initAmbience } from "./ambience.js";
 
 // Utilidades -------------------------------------------------------------
 
@@ -810,6 +811,7 @@ function initNav(): void {
   sections.forEach((s) => io.observe(s));
 }
 
+initAmbience();
 renderHud();
 renderPath();
 renderAchievements();

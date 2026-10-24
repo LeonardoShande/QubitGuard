@@ -26,6 +26,13 @@ function paint(host, draw, width) {
     host.dataset.width = String(width);
     host.replaceChildren(draw(width));
 }
+/** Retira también el redibujado pendiente al pasar a un estado vacío. */
+export function unmount(host) {
+    observer.unobserve(host);
+    draws.delete(host);
+    host.removeAttribute("data-width");
+    host.replaceChildren();
+}
 /** Dibuja en `host` y vuelve a dibujar cuando cambia su ancho. */
 export function mount(host, draw) {
     if (!draws.has(host))

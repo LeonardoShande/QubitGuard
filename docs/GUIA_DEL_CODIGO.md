@@ -114,7 +114,7 @@ Devuelve media medida, media esperada `(N+1)/2` e histograma. Hasta 64 candidato
 
 `compare` extrapola fórmulas hasta 256 bits y calcula la razón entre intentos clásicos esperados e iteraciones de Grover. El campo `speedup` es esa razón, **no una aceleración de tiempo medida**. En tamaños grandes se usan flotantes para presentar magnitudes; no representan conteos enteros exactos de ejecución.
 
-Caso límite conocido: con `max_bits=2` o `3`, la tabla actual no genera filas. La [revisión](REVISION_PROMPT_Y_BASES.md#mejoras-priorizadas) explica el efecto y la corrección propuesta.
+Caso límite conocido: con `max_bits=2` o `3`, la API no genera filas. El frontend muestra una explicación, vacía la tabla y retira el observador del gráfico anterior para que no reaparezca al redimensionar. La ampliación del conjunto de filas del backend sigue siendo una mejora propuesta.
 
 ## Frontend por módulos
 
@@ -185,7 +185,7 @@ Las cabeceras y el semáforo no aportan autenticación ni un límite global de s
 | `npm run check` | Consistencia de tipos TypeScript sin emitir archivos. |
 | `.github/workflows/ci.yml` | Python 3.13 y Node 24 en Ubuntu; Python excluye `slow`. |
 
-Pruebas locales ejecutadas: 47 Python y 26 frontend, además de tipos. No son pruebas completas del DOM ni un estudio de aprendizaje. Cuando cambies una ruta, revisa router, cliente TypeScript, consumidor, tests y [API.md](API.md); cuando cambies TypeScript, recompila y versiona `dist/`.
+Pruebas locales ejecutadas: 47 Python y 29 frontend, además de tipos. Las tres pruebas nuevas de `dom.test.mjs` verifican interrupción de animaciones, movimiento reducido y ausencia de Web Animations. No son pruebas completas del DOM ni un estudio de aprendizaje. Cuando cambies una ruta, revisa router, cliente TypeScript, consumidor, tests y [API.md](API.md); cuando cambies TypeScript, recompila y versiona `dist/`.
 
 Para revisar el motor desde PyCharm, usa como intérprete el entorno que contiene las dependencias, configura `uvicorn` como módulo, `app.main:app --reload` como parámetros y la raíz del repositorio como directorio. Puedes colocar breakpoints en `grover` y `run_grover`, o ejecutar directamente los tests con ese intérprete.
 

@@ -43,7 +43,7 @@ export const ACHIEVEMENTS: Array<{ id: AchievementId; title: string; detail: str
   { id: "prediccion", title: "Primera predicción", detail: "Te comprometiste con un número antes de mirar." },
   { id: "prediccion-exacta", title: "Primera predicción exacta", detail: "A 3 puntos o menos, o las iteraciones justas." },
   { id: "ruido", title: "Viste el ruido borrar a Grover", detail: "Con ruido, la medida cayó muy por debajo de la teoría." },
-  { id: "pw128", title: "Contraseña de 128+ bits generada", detail: "Resistente a Grover: 64 bits efectivos o más." },
+  { id: "pw128", title: "Contraseña de 128+ bits generada", detail: "Meta educativa: 64 bits efectivos o más en el modelo ideal." },
   { id: "racha3", title: "Tres días seguidos", detail: "Resolviste el reto diario tres días sin cortar." },
   { id: "ruta", title: "Ruta completa", detail: "Recorriste los cinco pasos, de la superposición a la criptografía." },
 ];

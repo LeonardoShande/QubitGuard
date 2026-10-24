@@ -22,9 +22,13 @@ export function fieldError(input, message) {
     return !message;
 }
 const reduceQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+const animations = new WeakMap();
 /** Web Animations API con la curva del sistema; no hace nada si el usuario pidió menos movimiento. */
 export function motion(node, keyframes, duration, delay = 0) {
+    animations.get(node)?.cancel();
     if (reduceQuery.matches || typeof node.animate !== "function")
         return null;
-    return node.animate(keyframes, { duration, delay, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "backwards" });
+    const animation = node.animate(keyframes, { duration, delay, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "backwards" });
+    animations.set(node, animation);
+    return animation;
 }

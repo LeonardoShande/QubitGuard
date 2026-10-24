@@ -46,11 +46,39 @@
 
   <main id="contenido">
     <section class="hero wrap" id="inicio" aria-labelledby="hero-title">
+      <div class="hero__field" aria-hidden="true">
+        <pre class="ascii-field">.  :  .  |0&gt;  .  :  .  +  .  :  .  |1&gt;  .  :  .
+ :  .  +  .  :  .  |0&gt;  .  :  .  +  .  :  .  |1&gt;
+.  +  .  :  .  |1&gt;  .  :  .  +  .  :  .  |0&gt;  .
+ |0&gt;  .  :  .  +  .  :  .  |1&gt;  .  :  .  +  .  :
+.  :  .  +  .  :  .  |0&gt;  .  :  .  +  .  :  .  +
+ :  .  |1&gt;  .  :  .  +  .  :  .  |0&gt;  .  :  .  +
+.  +  .  :  .  +  .  :  .  |1&gt;  .  :  .  +  .  :
+ |1&gt;  .  :  .  |0&gt;  .  :  .  +  .  :  .  |1&gt;  .
+.  :  .  +  .  :  .  |1&gt;  .  :  .  +  .  :  .  +
+ :  .  |0&gt;  .  :  .  +  .  :  .  |1&gt;  .  :  .  +
+.  +  .  :  .  |1&gt;  .  :  .  +  .  :  .  |0&gt;  .
+ |0&gt;  .  :  .  +  .  :  .  |1&gt;  .  :  .  +  .  :
+.  :  .  +  .  :  .  |0&gt;  .  :  .  +  .  :  .  +
+ :  .  |1&gt;  .  :  .  +  .  :  .  |0&gt;  .  :  .  +
+.  +  .  :  .  +  .  :  .  |1&gt;  .  :  .  +  .  :</pre>
+      </div>
+      <div class="hero__event">
+        <a href="https://ibmquantumhackathon.ieeecspucp.com/retos" target="_blank" rel="noopener noreferrer">Proyecto para IBM Quantum Hackathon<span class="visually-hidden"> (abre en otra pestaña)</span></a>
+        <span>Qiskit Fall Fest 2026 / Lima</span>
+      </div>
       <div class="hero__copy">
-        <h1 id="hero-title">Probar llaves al azar o amplificar la correcta</h1>
-        <p class="lead">Un buscador clásico que no sabe nada del secreto necesita, en promedio, <span class="mono">(N+1)/2</span> intentos. El algoritmo de Grover lo encuentra en unas <span class="mono">π/4·√N</span> iteraciones. Aquí lo compruebas con circuitos de Qiskit, simulados con y sin ruido.</p>
+        <p class="hero__index mono">01 / Probabilidad y amplitudes</p>
+        <h1 id="hero-title">El azar prueba.<br><span>Grover amplifica.</span></h1>
+        <p class="lead">Un laboratorio para entender cómo cambian las probabilidades al buscar un secreto. Predice, ejecuta un circuito de Qiskit y descubre qué ocurre al añadir ruido.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#laboratorio">Experimentar con Grover <span aria-hidden="true">↓</span></a>
+          <a class="hero__route" href="#ruta">Seguir la ruta de aprendizaje</a>
+        </div>
+        <p class="hero__scope">Desde 14 años · Simulación local · Sin cuenta IBM</p>
       </div>
       <div class="race" aria-labelledby="race-title">
+        <div class="race__head"><span class="mono">Explora la escala</span><span class="mono">N = 2ⁿ</span></div>
         <h2 class="race__title" id="race-title">Si el secreto tiene <output id="race-bits-out" for="race-bits">40</output> bits</h2>
         <label class="visually-hidden" for="race-bits">Tamaño del secreto en bits</label>
         <input class="range" type="range" id="race-bits" min="2" max="128" step="1" value="40">
@@ -65,10 +93,11 @@
           </div>
           <div class="race__row race__row--quantum">
             <dt>Iteraciones de Grover <span class="mono">π/4·√N</span></dt>
-            <dd class="mono" id="race-grover">—</dd>
+            <dd class="mono"><span id="race-grover">—</span><span class="race__bar" id="race-grover-bar" aria-hidden="true"></span></dd>
           </div>
         </dl>
         <p class="race__note" id="race-note"></p>
+        <p class="race__disclaimer">Comparación teórica de consultas. No son tiempos medidos.</p>
       </div>
     </section>
 
@@ -310,7 +339,7 @@
     <section class="section wrap" id="contrasena" aria-labelledby="pw-title">
       <div class="section__head">
         <h2 id="pw-title">Tu contraseña: ¿qué tan segura es?</h2>
-        <p class="section__sub">Estimamos su entropía y cuánto tardaría un ataque de fuerza bruta clásico frente al límite teórico de Grover. Después, genera una que resista a ambos.</p>
+        <p class="section__sub">Explora una estimación de entropía y compara los supuestos de una búsqueda clásica con Grover idealizado. También puedes generar una contraseña aleatoria en este navegador.</p>
       </div>
       <p class="privacy" id="pw-privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3Z"/></svg>Tus contraseñas nunca salen de este navegador. No se envían, no se guardan y desaparecen al recargar.</p>
       <div class="pw-stack">
@@ -415,20 +444,20 @@
             <p class="state gen__status" id="gen-status" role="status"></p>
 
             <div class="goal">
-              <p class="goal__label">Meta resistente a Grover: <b class="mono">≥ 128 bits</b> (64 efectivos)</p>
+              <p class="goal__label">Meta educativa: <b class="mono">≥ 128 bits</b> (64 efectivos en el modelo ideal)</p>
               <div class="goal__track" aria-hidden="true"><span class="goal__fill" id="gen-meter"></span><span class="goal__line"></span></div>
               <p class="goal__text" id="gen-goal"></p>
               <p class="visually-hidden" id="gen-live" aria-live="polite"></p>
             </div>
             <dl class="metrics metrics--gen">
-              <div><dt>Entropía exacta</dt><dd class="mono" id="gen-bits">—</dd></div>
+              <div><dt>Aleatoriedad calculada</dt><dd class="mono" id="gen-bits">—</dd></div>
               <div><dt>Efectivos frente a Grover</dt><dd class="mono" id="gen-grover">—</dd></div>
               <div><dt>Alfabeto</dt><dd class="mono" id="gen-alpha">—</dd></div>
             </dl>
           </div>
         </form>
       </div>
-      <p class="note">El tiempo de Grover es un límite teórico idealizado: supone un computador cuántico tolerante a fallos, que hoy no existe, ejecutando un millón de iteraciones del oráculo por segundo. Aun así la regla práctica se mantiene: Grover reduce a la mitad los bits efectivos, así que una buena contraseña o clave debe tener el doble de bits. La entropía del analizador es una estimación; la del generador es exacta porque sabemos cómo se eligió cada carácter.</p>
+      <p class="note">El tiempo de Grover es un escenario hipotético que supone un millón de iteraciones del oráculo por segundo. El analizador estima la entropía; el generador calcula bits según su método de elección. La meta de 128 bits equivale a unos 64 efectivos bajo el modelo idealizado: no es una certificación de seguridad.</p>
     </section>
 
     <section class="section wrap" id="poscuantica" aria-labelledby="pqc-title">

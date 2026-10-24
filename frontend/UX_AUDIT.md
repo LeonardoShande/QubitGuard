@@ -23,22 +23,34 @@ Revisión heurística (Nielsen, Krug) y técnica (WCAG 2.2 AA) de la versión an
 
 ## Contraste medido (WCAG 2.x, fórmula de luminancia relativa)
 
-Fondos: `--bg #06080c`, `--panel #0c1118`, `--panel-2 #111823`.
+Fondos actualizados en la pasada ASCII: `--bg #080c14`, `--panel #0e1520`, `--panel-2 #131e2c`. Las cifras de la tabla se recalcularon; los valores de la tabla histórica de hallazgos anterior describen su revisión original.
 
 | Token | Uso | sobre bg | sobre panel | sobre panel-2 | Requisito |
 |-------|-----|----------|-------------|---------------|-----------|
-| `--text #dce5ee` | texto | 15,73 | 14,87 | 13,99 | 4,5 ✔ |
-| `--muted #95a5b6` | texto secundario | 7,96 | 7,52 | 7,07 | 4,5 ✔ |
-| `--cyan #46d9e8` | cuántico, enlaces, foco | 11,79 | 11,14 | 10,48 | 4,5 / foco 3 ✔ |
-| `--magenta #ea6bbd` | clásico, racha | 7,00 | 6,62 | 6,22 | 4,5 ✔ |
-| `--ok #6ee39a` | correcto | 12,52 | 11,83 | 11,13 | 4,5 ✔ |
-| `--err #ff8080` | errores | 8,26 | 7,80 | 7,34 | 4,5 ✔ |
-| `--warn #f0a35e` | contraseña débil | 9,64 | 9,11 | 8,57 | 4,5 ✔ |
-| `--edge #6b7f94` | bordes de controles, barras | 4,86 | 4,59 | 4,32 | 3 (no textual) ✔ |
-| `#8a6f84` | barras Monte Carlo | 4,47 | 4,23 | 3,98 | 3 ✔ |
+| `--text #dce5ee` | texto | 15,36 | 14,38 | 13,19 | 4,5 ✔ |
+| `--muted #a1b0c2` | texto secundario | 8,86 | 8,29 | 7,61 | 4,5 ✔ |
+| `--cyan #46d9e8` | cuántico, enlaces, foco | 11,51 | 10,77 | 9,88 | 4,5 / foco 3 ✔ |
+| `--magenta #ea6bbd` | clásico, racha | 6,84 | 6,40 | 5,87 | 4,5 ✔ |
+| `--ok #6ee39a` | correcto | 12,22 | 11,44 | 10,50 | 4,5 ✔ |
+| `--err #ff8080` | errores | 8,06 | 7,54 | 6,92 | 4,5 ✔ |
+| `--warn #f0a35e` | contraseña débil | 9,42 | 8,81 | 8,09 | 4,5 ✔ |
+| `--edge #6b7f94` | bordes de controles, barras | 4,74 | 4,44 | 4,07 | 3 (no textual) ✔ |
+| `#8a6f84` | barras Monte Carlo | 4,37 | 4,09 | 3,75 | 3 ✔ |
 | `#031216` sobre `--cyan` | botón primario, skip link | 11,21 | | | 4,5 ✔ |
 
-El anillo de foco (2 px `--cyan`, separado 2 px) tiene 11,1:1 o más frente a cualquier fondo de la página.
+El anillo de foco (2 px `--cyan`, separado 2 px) tiene al menos 9,88:1 frente a los tres fondos base.
+
+## Pasada ASCII y movimiento del 24 de octubre
+
+- Se retiraron las líneas de fondo que cruzaban los números del comparador. Cifras tabulares, filas separadas y títulos estables mantienen la lectura al mover el slider.
+- Se alinearon títulos y botones de la ruta de cinco pasos, y las métricas de predicción se apilan en móvil estrecho.
+- Entrada inicial CSS de 500 ms, con 80 ms entre título y tarjeta. El motivo ASCII se asienta una sola vez en 2,4 s. No hay loop JS, canvas, WebGL ni dependencia de ejecución nueva.
+- Resultados con fundido de 240 ms, sin estirar los gráficos. El helper cancela su animación anterior si llega otra actualización y respeta movimiento reducido; hay tres pruebas de regresión.
+- El estado vacío de comparación elimina datos anteriores y su observador de tamaño; se comprobó por interacción que no reaparece el gráfico después de redimensionar.
+- El análisis detectó texto cian sobre fondo cian al pasar por el enlace primario. Se fijó el color oscuro también en hover. Se retiró la supresión provisional tras identificar el par real; no quedan reglas ignoradas de esta revisión. El ASCII sigue siendo decorativo y `aria-hidden`.
+- Reflow comprobado por DOM y captura a 320, 375 y 1440 px. Tablas y circuitos conservan desplazamiento interno.
+
+Estas comprobaciones no certifican WCAG ni garantizan FPS en teléfonos reales. El rendimiento de movimiento se verificó por las propiedades animadas y la ausencia de bucles de renderizado; no se hizo un perfil en hardware móvil.
 
 ## Fuera de alcance
 

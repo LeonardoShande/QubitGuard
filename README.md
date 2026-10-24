@@ -276,7 +276,7 @@ cd ..
 
 Las pruebas Python usan `TestClient`: no requieren iniciar Uvicorn por separado. `npm test` compila el frontend y ejecuta las pruebas de contraseñas, generación y progreso con `node:test`.
 
-Validación local del **24 de octubre de 2026**: **47 pruebas Python** y **26 pruebas de frontend** aprobadas, además de `npm run check`. Se ejecutaron con Python 3.13.14 y Node.js 24.18.0. Son resultados de esa revisión, no una garantía sobre futuras versiones de dependencias.
+Validación local del **24 de octubre de 2026**: **47 pruebas Python** y **29 pruebas de frontend** aprobadas, además de `npm run check`. Se ejecutaron con Python 3.13.14 y Node.js 24.18.0. Son resultados de esa revisión, no una garantía sobre futuras versiones de dependencias.
 
 Resultados reproducidos con los mismos cuerpos JSON de los ejemplos anteriores, Qiskit 2.6.1, Aer 0.18.0 e IBM Runtime 0.51.0:
 
@@ -355,6 +355,9 @@ Antes de proponer cambios, revisa el contrato de API y ejecuta las comprobacione
 | [Arquitectura](docs/architecture.md) | Capas, flujo, cachés y decisiones técnicas. |
 | [Guía del código](docs/GUIA_DEL_CODIGO.md) | Funcionamiento por módulos, funciones, privacidad y mantenimiento. |
 | [Revisión del prompt y las bases](docs/REVISION_PROMPT_Y_BASES.md) | Comparación del encargo con el resultado, rúbrica y mejoras priorizadas. |
+| [Dirección visual](DESIGN.md) | Referencias ASCII, motivos, colores semánticos y decisiones de movimiento. |
+| [Encargos para GLM](docs/TAREAS_GLM.md) | Prompts acotados para revisión científica, guion, piloto y comprobaciones. |
+| [Reto y entrega](docs/RETO_Y_ENTREGA.md) | Encaje con los tres retos, nuevo mapeo oficial y cronograma compartido. |
 | [Contrato de API](docs/API.md) | Cuerpos, respuestas y convenciones. |
 | [Despliegue](docs/DEPLOY.md) | Demo pública y configuración de publicación. |
 | [Limitaciones](docs/LIMITACIONES.md) | Alcance educativo y supuestos. |

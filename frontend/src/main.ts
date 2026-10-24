@@ -1,5 +1,5 @@
 import { api, ApiError, describeError, type CompareRow, type DailyChallenge, type GroverCurve, type GroverResult } from "./api.js";
-import { barChart, lineChart, mount } from "./charts.js";
+import { barChart, lineChart, mount, unmount } from "./charts.js";
 import { $, fieldError, h, motion } from "./dom.js";
 import { formatPow10 } from "./password.js";
 import { initPasswordUI } from "./password-ui.js";
@@ -221,7 +221,7 @@ function initRace(): void {
     $("race-grover").textContent = fmtBig(grover);
     input.setAttribute("aria-valuetext", `${n} bits`);
     const ratio = Math.max(0.015, Math.log10(grover + 1) / Math.log10(classic + 1));
-    $("race-grover").parentElement!.style.setProperty("--s", String(ratio));
+    $("race-grover-bar").style.transform = `scaleX(${ratio})`;
     $("race-note").textContent =
       `Grover necesita unas ${fmtBig(Math.round(classic / grover))} veces menos consultas al oráculo. Las barras usan escala logarítmica.`;
   };
@@ -508,9 +508,8 @@ function renderResult(r: GroverResult): void {
     label: `El estado marcado ${r.marked_state} aparece ${values[hi]} veces de ${r.shots}; el resto de los ${labels.length - 1} estados se reparte ${r.shots - (values[hi] ?? 0)}.`,
     xTitle: "Estado medido",
   }));
-  // Las barras crecen desde la base: el ojo ve cómo la probabilidad se concentra en el marcado.
   const bars = host.querySelector(".bars");
-  if (bars) motion(bars, [{ transform: "scaleY(0.04)", opacity: 0.4 }, { transform: "none", opacity: 1 }], 520);
+  if (bars) motion(bars, [{ opacity: 0 }, { opacity: 1 }], 240);
   const sorted = labels.map((l, i) => [l, values[i]!] as const).sort((a, b) => b[1] - a[1]);
   fillTable("lab-hist-table", sorted.map(([l, v]) => [l === r.marked_state ? `${l} (marcado)` : l, v.toLocaleString("es-PE"), pct(v / r.shots)]));
   $("lab-hist-data").hidden = false;
@@ -589,7 +588,7 @@ function placeMarkers(scale: HTMLElement, pred: number, theory: number, measured
   const width = scale.clientWidth;
   for (const [name, at] of marks.slice(1)) {
     const dx = (clamp(pred) - clamp(at)) * width;
-    motion(scale.querySelector(`.mark--${name}`)!, [{ transform: `translateX(${dx}px)`, opacity: 0 }, { transform: "none", opacity: 1 }], 600, 120);
+    motion(scale.querySelector(`.mark--${name}`)!, [{ transform: `translateX(${dx}px)`, opacity: 0 }, { transform: "none", opacity: 1 }], 240);
   }
 }
 
@@ -675,7 +674,7 @@ function initMonteCarlo(): void {
         return svg;
       });
       const bars = host.querySelector(".bars");
-      if (bars) motion(bars, [{ transform: "scaleY(0.04)", opacity: 0.4 }, { transform: "none", opacity: 1 }], 520);
+      if (bars) motion(bars, [{ opacity: 0 }, { opacity: 1 }], 240);
       fillTable("mc-table", bins.map((b, i) => [width === 1 ? String(b) : `${b}–${b + width - 1}`, (counts[i] ?? 0).toLocaleString("es-PE")]));
       $("mc-data").hidden = false;
       $("mc-mean").textContent = fmtBig(r.mean_attempts);
@@ -724,7 +723,13 @@ function initCompare(): void {
 }
 
 function renderCompare(rows: CompareRow[]): void {
-  if (!rows.length) return;
+  if (!rows.length) {
+    unmount($("cmp-chart"));
+    $("cmp-chart").replaceChildren(h("p", { class: "chart__locked" }, "No hay filas para ese rango. Prueba con 4 bits o más."));
+    $("cmp-legend").hidden = true;
+    fillTable("cmp-table", []);
+    return;
+  }
   const first = rows[0]!;
   const last = rows[rows.length - 1]!;
   mount($("cmp-chart"), lineChart({

@@ -97,7 +97,7 @@ text(s, 0.6, 4.4, 12.1, 2.4,
      "Explorador de amplitudes en vivo (fórmulas exactas, sin servidor)\n"
      "Tu ruta (5 pasos) | Reto diario | Azar frente a Grover | Tu contraseña\n"
      "CLI scripts/run_ibm_hardware.py: fake | dry-run | ibm | --job-id\n"
-     "Calidad: 67 pruebas pytest, 36 de frontend, objetivo WCAG 2.2 AA", 17, TXT, font=MONO)
+     "Calidad: 72 pruebas pytest, 37 de frontend, objetivo WCAG 2.2 AA", 17, TXT, font=MONO)
 
 # 5 por qué Qiskit (gráfica)
 s = new_slide("Por qué Qiskit", 5)
@@ -160,7 +160,7 @@ ch.value_axis.major_gridlines.format.line.color.rgb = RGBColor(0x2A, 0x2D, 0x3A)
 
 # 7 limitaciones y validación
 s = new_slide("Validación y limitaciones", 7)
-card(s, 0.6, 1.6, 5.9, 4.8, "Medido (semilla fija)", "Grover n=4, k=3, 2048 disparos:\nmedido 0,953 vs teórico 0,961\nCurva Statevector vs fórmula: error 6e-14\nMonte Carlo 10 bits: media 513,3 vs 512,5\nFakeFez (CLI): 0,802 con n=3, 0,0166 con n=6\n67 pruebas pytest, 36 de frontend", CYAN, mono=True)
+card(s, 0.6, 1.6, 5.9, 4.8, "Medido (semilla fija)", "Grover n=4, k=3, 2048 disparos:\nmedido 0,953 vs teórico 0,961\nCurva Statevector vs fórmula: error 6e-14\nMonte Carlo 10 bits: media 513,3 vs 512,5\nFakeFez (CLI): 0,802 con n=3, 0,0166 con n=6\n72 pruebas pytest, 37 de frontend", CYAN, mono=True)
 card(s, 6.8, 1.6, 5.9, 4.8, "Limitaciones honestas", "Ruido simulado (FakeFez): sin hardware real.\nGrover es mejora cuadrática; no rompe AES hoy.\nSimulación hasta 6 qubits; no hay QAE.\nEl oráculo ya conoce la respuesta.\nPiloto con usuarios y retención: pendientes.", MAG)
 
 # 8 impacto / cierre

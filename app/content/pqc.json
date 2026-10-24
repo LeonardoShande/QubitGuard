@@ -2,7 +2,7 @@
  {"id": "grover-aes", "title": "Grover frente a AES: la clave se acorta a la mitad, no desaparece", "threat": "Grover",
   "targets": ["AES-128", "AES-256"],
   "summary": "El algoritmo de Grover (1996) busca una clave entre N = 2^n posibilidades en unas pi/4 * raíz(N) iteraciones en lugar de ~N/2 intentos. Idealizado, una clave de n bits ofrece unos n/2 bits de seguridad efectiva: AES-128 quedaría en ~64 bits y AES-256 en ~128 bits.",
-  "impact": "AES-256 sigue siendo cómodo incluso con esa reducción idealizada (~2^128). AES-128 queda más justo en teoria, pero el costo real es mucho mayor que el de la cuenta ideal: las iteraciones de Grover son secuenciales (paralelizar reparte mal el trabajo: con P máquinas el ahorro es solo ~raíz(P)), cada iteración exige evaluar AES como circuito reversible y, con corrección de errores, cada puerta lógica cuesta muchisimos qubits físicos. Hoy no existe un ataque cuántico práctico a AES.",
+  "impact": "AES-256 sigue siendo cómodo incluso con esa reducción idealizada (~2^128). AES-128 queda más justo en teoria, pero el costo real es mucho mayor que el de la cuenta ideal: las iteraciones de Grover son secuenciales (paralelizar reparte mal el trabajo: con P máquinas el ahorro es solo ~raíz(P)), cada iteración exige evaluar AES como circuito reversible y, con corrección de errores, cada puerta lógica cuesta muchísimos qubits físicos. Hoy no existe un ataque cuántico práctico a AES.",
   "mitigation": "Usar AES-256 donde se quiera margen largo plazo y mantener AES-128 solo si el modelo de riesgo lo permite. No hace falta abandonar AES: la criptografía simétrica solo necesita claves mayores.",
   "sources": [
    {"label": "Grover (1996), A fast quantum mechanical algorithm for database search (arXiv:quant-ph/9605043)", "url": "https://arxiv.org/abs/quant-ph/9605043"},
@@ -35,7 +35,7 @@
    {"label": "NIST FIPS 203, ML-KEM", "url": "https://csrc.nist.gov/pubs/fips/203/final"}]},
  {"id": "grover-hash-passwords", "title": "Hashes y contraseñas: Grover recorta, el KDF y la longitud mandan", "threat": "Grover",
   "targets": ["Hashes (SHA-256)", "Contraseñas"],
-  "summary": "Para invertir un hash de n bits por fuerza bruta, Grover reduce la búsqueda de preimagen a ~2^(n/2) evaluaciones frente a ~2^n clasicas. La resistencia a colisiones se ve afectada mucho menos.",
+  "summary": "Para invertir un hash de n bits por fuerza bruta, Grover reduce la búsqueda de preimagen a ~2^(n/2) evaluaciones frente a ~2^n clásicas. La resistencia a colisiones se ve afectada mucho menos.",
   "impact": "Una contraseña corta o predecible cae por diccionario clasico mucho antes de que importe Grover: el eslabon debil es la entropía de la contraseña, no el computador cuántico. Y un KDF lento multiplica el costo de cada intento, también el de cada iteración de Grover, porque el oráculo debe calcular el KDF completo.",
   "mitigation": "Contraseñas largas (frases de paso únicas), un KDF lento y con uso intensivo de memoria como Argon2 (RFC 9106) y autenticacion multifactor (MFA). Nada de esto exige hardware cuántico.",
   "sources": [

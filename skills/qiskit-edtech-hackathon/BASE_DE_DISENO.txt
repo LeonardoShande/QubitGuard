@@ -1,0 +1,151 @@
+BASE DE DISENO - QubitGuard (laboratorio educativo cuantico)
+Brief de pegado rapido para reproducir producto, look, movimiento y UX.
+Fuente: repo QubitGuard, 24 oct 2026. Valores verificados en el codigo.
+
+====================================================================
+1. PRODUCTO: DE LA ESTADISTICA A LO CUANTICO
+====================================================================
+
+Pregunta: cuantos intentos hacen falta para hallar un secreto entre N.
+Referencia clasica: intentos esperados (N + 1) / 2; N=16 -> 8,5.
+Equivalente cuantico (amplificacion de amplitud de Grover):
+- theta = asin(1 / sqrt(N))
+- P(k) = sin^2((2k + 1) * theta)
+- k optimo = floor(pi / (4 * theta))
+- Ejemplo N = 16: k = 3, teoria 96,1 %.
+- Ventaja cuadratica, no exponencial. No es QAE, no es QML.
+
+Par oficial que se usa como eje:
+- Distribuciones de probabilidad -> superposicion y amplitudes.
+Pares que existen pero NO se implementan: SVM -> QSVM, Monte Carlo ->
+QAE, redes -> QNN/VQC, gradiente -> QGD. No cambiar la etiqueta del
+proyecto para encajar en otro reto.
+
+Metodo Predice -> Observa -> Explica:
+- Predice: apuesta una probabilidad o un numero de iteraciones antes
+  de ejecutar. Sin prediccion no hay XP.
+- Observa: misma escala para prediccion, teoria y medicion; ademas
+  histograma, curva y metricas del circuito transpilado.
+- Explica: texto breve que interpreta, corrige el error y compara con
+  el azar (k / N).
+- El explorador de amplitudes se desbloquea tras predecir, pero se
+  puede abrir con "Explorar sin predecir". No bloquear el acceso.
+
+Publico: desde 14 anos. Solo fracciones, porcentajes y probabilidad;
+sin algebra lineal. Uso propuesto: 3 minutos al dia; en aula, semanal.
+
+Bucle de retorno:
+- Reto diario determinista por fecha local (SHA-256 de la fecha ISO
+  como semilla; misma fecha, mismo reto; sin base de datos).
+- Racha de dias locales consecutivos; la misma fecha no puntua dos veces.
+- XP, 7 niveles, 6 logros ligados a acciones que ensenan.
+- Progreso en localStorage; tolerante a datos corruptos o bloqueo.
+- Sin cuentas, sin ranking, sin antitrampa: el progreso es editable.
+- Honestidad: cada cifra se marca como teorica, medida, simulada o pendiente; nunca presentar un resultado no ejecutado.
+
+====================================================================
+2. LOOK: TOKENS Y COMPOSICION
+====================================================================
+
+Paleta semantica (hex exactos):
+- Fondo #080c14 | Panel #0e1520 | Panel elevado #131e2c
+- Separadores #223044 | Bordes 2 #30425a | Texto #dce5ee | Secundario #a1b0c2
+- Cian #46d9e8: cuantico, Grover, enlaces, foco
+- Magenta #ea6bbd: clasico, Monte Carlo, azar, racha
+- OK #6ee39a | Error #ff8080 | Aviso #f0a35e | Bordes y barras #6b7f94 (>= 3:1)
+
+El color nunca va solo: cian y magenta llevan etiqueta textual
+("cuantico", "clasico"). Paneles opacos; el ASCII queda detras
+(z-index -1) y nunca reduce la legibilidad.
+
+Tipografia sin internet (pilas del sistema):
+- Mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono",
+  "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace.
+- Sans: system-ui, -apple-system, "Segoe UI Variable Text",
+  "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif.
+- Mono para titulos, cifras y datos; tabular-nums + slashed-zero.
+- Sans para texto explicativo. Sin Google Fonts ni CDN.
+
+Direccion: ENERGY 2 / RHYTHM 2 / MOTION 2. Denso pero calmado.
+Sin canvas, WebGL, React ni dependencias runtime.
+Fondo ASCII en 3 capas: textura SVG que deriva, halos radiales cian y
+magenta, lluvia de kets/puertas en columnas CSS.
+Intro de marca: IBM en ASCII, 8 filas x 32 columnas (I=8, B=8, M=12,
+separacion 2); cada glifo nace en cian y colapsa al caracter final.
+Es decorativa, aria-hidden, se salta con clic, toque, Esc o foco.
+No copiar logotipos oficiales ni implicar patrocinio.
+Superficies: radio 8 px, borde 1 px, fondo opaco. Foco visible:
+outline 2 px #46d9e8, offset 2 px. Cifras tabulares. Sin lineas de
+fondo detras de cifras.
+
+====================================================================
+3. MOVIMIENTO
+====================================================================
+
+Curvas y duraciones reales:
+- Salida: cubic-bezier(0.23, 1, 0.32, 1)
+- Ida y vuelta: cubic-bezier(0.77, 0, 0.175, 1)
+- Rapida 160 ms | Base 240 ms | Lenta 450 ms
+- Intro 2900 ms; colapso ~26 ms/columna + 40 ms/fila; sheen
+  escalonado 28 ms/fila.
+- Reveal de seccion: 450 ms, escalonado 70 ms, una vez.
+- Histograma entre ejecuciones: 440 ms emparejando por etiqueta.
+- Cifras que cuentan: rAF transitorio 420 ms, cancelable.
+- Explorador: tween 260-420 ms; paso en dos tiempos (oraculo/difusor).
+- Carga: el resultado viejo baja a opacidad 0.45 en 240 ms.
+
+Reglas:
+- Solo animar datos nuevos. Marcar la generacion; los repintados por
+  cambio de ancho llegan quietos. Nunca re-animar por CSS a secas.
+- Solo transform, opacity y atributos SVG. Nunca width/height/top/left.
+- Barras: transform-box fill-box; transform-origin bottom.
+- Nada de bucles rAF permanentes; todo termina o se cancela.
+- prefers-reduced-motion: sin intro, sin reveal, sin WAAPI;
+  transiciones a 0.01 ms. Los datos siguen disponibles.
+- Al imprimir, ningun contenido queda transparente.
+- La intro no atrapa foco: se retira sola o al primer focusin.
+
+====================================================================
+4. UX Y ACCESIBILIDAD (WCAG 2.2 AA, verificacion parcial)
+====================================================================
+
+- Contraste de texto >= 4.5:1; controles y barras >= 3:1.
+  Medidos: texto 14.38:1 sobre panel; secundario 8.29:1; cian
+  10.77:1; magenta 6.40:1; bordes 4.44:1.
+- Foco visible siempre. Nunca outline:none sin reemplazo.
+- Objetivos tactiles >= 24x24 px. Sin sticky que tape el foco.
+- Reflow a 320 px sin scroll horizontal; tablas y circuitos con
+  scroll interno.
+- Cada SVG: title, desc, aria-labelledby/aria-describedby y tabla de
+  datos equivalente debajo.
+- Errores por campo con aria-describedby y aria-invalid; al enviar,
+  el foco salta al primer campo invalido.
+- Un solo h1, jerarquia de encabezados, skip link, aria-live para
+  resultados y copia.
+- No usar color como unica senal: anadir texto.
+- Probar teclado, texto al 200 %, 320/375/768/1440 px y movimiento
+  reducido. No afirmar conformidad completa sin lectores de pantalla.
+
+====================================================================
+5. SEGURIDAD Y PRIVACIDAD
+====================================================================
+
+- CSP de mismo origen: default-src 'self'; sin scripts de terceros.
+  Se permiten estilos inline e imagenes data:.
+- Cabeceras: nosniff, Referrer-Policy no-referrer, X-Frame-Options
+  DENY, COOP same-origin, Permissions-Policy restrictiva.
+  HSTS solo detras de HTTPS, no en local.
+- Publicar solo: index.html, styles.css, dist/ y assets/.
+  Normalizar la ruta antes de comparar (posixpath.normpath) para que
+  ".." no evade la allowlist. Todo lo demas: 404.
+- Caché: simulaciones no-store; contenido determinista con max-age;
+  estaticos no-cache con ETag.
+- Limite de 2 simulaciones ruidosas por proceso; si no hay cupo en
+  10 s, 503 con Retry-After: 2. No es rate limiting ni autenticacion.
+- Contrasenas solo en el navegador: ningun endpoint las recibe.
+  Generacion con crypto.getRandomValues y muestreo por rechazo;
+  nunca Math.random, nunca semilla.
+- Tests que prohiben red, almacenamiento y Math.random en los modulos
+  de contrasenas; test de contrato sin campos de contrasena.
+- Credenciales IBM solo por entorno o cuenta guardada por el usuario;
+  nunca por argumento, nunca por la web, nunca en logs.

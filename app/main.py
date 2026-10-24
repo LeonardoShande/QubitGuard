@@ -1,5 +1,6 @@
 """Aplicación principal de QubitGuard: API + frontend estático en un solo proceso."""
 
+import posixpath
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -44,11 +45,16 @@ PUBLIC_PREFIXES = ("/api/", "/dist/", "/assets/")
 
 @app.middleware("http")
 async def response_policies(request: Request, call_next):
-    path = request.url.path
+    # StaticFiles normaliza '..' al resolver el archivo: la lista blanca debe evaluar la misma ruta normalizada.
+    path = posixpath.normpath(request.url.path)
     if path not in PUBLIC_FILES and path not in DOCS_PATHS and not path.startswith(PUBLIC_PREFIXES):
         response = JSONResponse(status_code=404, content={"detail": "Not Found"})
     else:
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception:
+            # Un 500 emitido fuera de este middleware saldría sin cabeceras de seguridad.
+            response = JSONResponse(status_code=500, content={"detail": "Error interno"})
     if path not in DOCS_PATHS:
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "

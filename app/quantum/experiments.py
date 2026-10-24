@@ -20,6 +20,8 @@ from qiskit_ibm_runtime.fake_provider import FakeFez
 MIN_GROVER_QUBITS = 2
 MAX_GROVER_QUBITS = 6
 MAX_SHOTS = 8192
+# Aer/transpile desbordan un entero de 64 bits con signo (500 con seeds mayores).
+MAX_SEED = 2**32 - 1
 _NOISY_SIMULATOR_LIMIT = threading.BoundedSemaphore(2)
 
 
@@ -34,8 +36,8 @@ def _validate_integer(name: str, value: int, minimum: int, maximum: int) -> int:
 
 
 def _validate_seed(seed: int | None) -> None:
-    if seed is not None and (isinstance(seed, bool) or not isinstance(seed, int) or seed < 0):
-        raise ValueError("seed must be a non-negative integer or null")
+    if seed is not None and (isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= MAX_SEED):
+        raise ValueError(f"seed must be an integer between 0 and {MAX_SEED}, or null")
 
 
 def optimal_iterations(n_qubits: int) -> int:

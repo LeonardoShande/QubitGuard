@@ -66,3 +66,56 @@ def test_only_browser_files_are_public(client):
         assert client.get(path).status_code == 200
     for path in ("/src/main.ts", "/package.json", "/tsconfig.json", "/node_modules/typescript/package.json"):
         assert client.get(path).status_code == 404
+
+
+def test_encoded_dot_segments_cannot_escape_public_prefixes(client):
+    for path in ("/dist/%2e%2e/package.json", "/dist/%2E%2E/src/main.ts", "/assets/%2e%2e/tsconfig.json"):
+        assert client.get(path).status_code == 404
+
+
+def test_dot_segments_cannot_escape_public_prefixes(client):
+    # httpx/TestClient colapsan "..", así que se usa la ruta ya decodificada que entregaría uvicorn.
+    from starlette.requests import Request  # noqa: F401
+    import asyncio
+    from app.main import app
+
+    async def status(path):
+        scope = {"type": "http", "method": "GET", "path": path, "raw_path": path.encode(), "query_string": b"",
+                 "headers": [(b"host", b"t")], "scheme": "http", "server": ("t", 80), "client": ("c", 1),
+                 "http_version": "1.1", "root_path": ""}
+        out = {}
+        queue = [{"type": "http.request", "body": b"", "more_body": False}]
+
+        async def receive():
+            return queue.pop(0) if queue else await asyncio.Event().wait()
+
+        async def send(message):
+            if message["type"] == "http.response.start":
+                out["status"] = message["status"]
+
+        task = asyncio.create_task(app(scope, receive, send))
+        await asyncio.wait({task}, timeout=2)
+        task.cancel()
+        return out["status"]
+
+    for path in ("/dist/../package.json", "/dist/../src/main.ts", "/api/../package.json",
+                 "/assets/../node_modules/.package-lock.json", "/dist/../UX_AUDIT.md"):
+        assert asyncio.run(status(path)) == 404, path
+    assert asyncio.run(status("/dist/main.js")) == 200
+
+
+def test_unhandled_errors_keep_security_headers(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+    from app.quantum import experiments
+
+    def boom():
+        raise RuntimeError("detalle interno")
+
+    monkeypatch.setattr(experiments, "capabilities", boom)
+    response = TestClient(app, raise_server_exceptions=False).get("/api/quantum/capabilities")
+    assert response.status_code == 500
+    assert "detalle interno" not in response.text
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert "content-security-policy" in response.headers

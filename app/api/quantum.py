@@ -19,7 +19,7 @@ class GroverRequest(BaseModel):
     marked_state: str = Field(default="0101", min_length=MIN_QUBITS, max_length=MAX_QUBITS, pattern="^[01]+$")
     iterations: int | None = Field(default=None, ge=0, le=20)
     shots: int = Field(default=1024, ge=1, le=8192)
-    seed: int | None = Field(default=None, ge=0)
+    seed: int | None = Field(default=None, ge=0, le=2**32 - 1)
     noisy: bool = False
 
 
@@ -34,7 +34,7 @@ class MonteCarloRequest(BaseModel):
 
     n_bits: int = Field(default=4, ge=2, le=20)
     trials: int = Field(default=1000, ge=1, le=5000)
-    seed: int | None = Field(default=None, ge=0)
+    seed: int | None = Field(default=None, ge=0, le=2**32 - 1)
 
 
 @router.get("/capabilities")

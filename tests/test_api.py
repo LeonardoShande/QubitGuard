@@ -70,3 +70,16 @@ def test_learning_content_and_daily_challenge(client):
     challenge = first.json()
     assert challenge == second.json()
     assert 0 <= challenge["answer_index"] < len(challenge["options"])
+
+
+def test_oversized_seed_is_rejected_with_422_not_500(client):
+    for path, extra in (("/api/quantum/grover", {"n_qubits": 2, "marked_state": "01"}), ("/api/quantum/montecarlo", {})):
+        assert client.post(path, json={**extra, "seed": 2**32 - 1}).status_code == 200
+        assert client.post(path, json={**extra, "seed": 2**63}).status_code == 422
+
+
+def test_oversized_seed_rejected_in_library():
+    import pytest
+    from app.quantum import experiments
+    with pytest.raises(ValueError):
+        experiments.run_grover(n_qubits=2, marked_state="01", seed=2**63)

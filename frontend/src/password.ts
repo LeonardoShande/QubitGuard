@@ -19,7 +19,7 @@ export interface Analysis {
   classicalLog10Seconds: number;
   /** log10 de las iteraciones de Grover ideales (≈ π/4 · 2^(bits/2)). */
   groverLog10Iterations: number;
-  /** log10 de los segundos de Grover, suponiendo (idealmente) la misma tasa por iteración. */
+  /** log10 de los segundos de Grover a QUANTUM_ITERATIONS_PER_SECOND (hipotético). */
   groverLog10Seconds: number;
   strength: Strength;
 }
@@ -92,6 +92,8 @@ export const STRENGTH_LABEL: Record<Strength, string> = {
  * Cada patrón sustituye el coste de sus caracteres por un coste pequeño (lo que costaría
  * adivinar el patrón en sí), sin contar dos veces el mismo carácter.
  */
+export const QUANTUM_ITERATIONS_PER_SECOND = 1e6;
+
 export function analyze(pw: string, attemptsPerSecond: number): Analysis {
   const chars = Array.from(pw);
   const length = chars.length;
@@ -176,7 +178,9 @@ export function analyze(pw: string, attemptsPerSecond: number): Analysis {
   const classicalLog10Seconds = Math.max(0, bits - 1) / LOG2_10 - log10Rate;
   // Grover: ≈ π/4 · √(2^bits) iteraciones del oráculo.
   const groverLog10Iterations = Math.log10(Math.PI / 4) + bits / 2 / LOG2_10;
-  const groverLog10Seconds = groverLog10Iterations - log10Rate;
+  // Una iteración ejecuta el oráculo (el hash como circuito reversible) en hardware tolerante a fallos,
+  // que hoy no existe; 1e6 iteraciones/s es una suposición muy optimista. Grover además paraleliza mal.
+  const groverLog10Seconds = groverLog10Iterations - Math.log10(QUANTUM_ITERATIONS_PER_SECOND);
 
   return {
     length, alphabet, alphabetParts: parts, rawBits, penalties, bits,

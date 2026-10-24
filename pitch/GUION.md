@@ -34,7 +34,7 @@ Pasos concretos (practicar el orden):
 3. Pulsar "Ejecutar" con iteraciones = 3 y ruido FakeFez activado. Señalar el histograma: el secreto domina con [dato de la demo] % de los disparos.
 4. Señalar la curva sin² exacta (Statevector) y el punto k=3 cerca de 96,1 %; comentar que la diferencia con el histograma es el ruido simulado.
 5. Subir a 5 o 6 qubits y mostrar que el óptimo cambia ([dato de la demo]).
-6. Pestaña "Monte Carlo vs Grover": mostrar la tabla de speedup; para n=4, 8,5 intentos esperados frente a 3 iteraciones.
+6. Pestaña "Azar frente a Grover": mostrar la tabla de speedup; para n=4, 8,5 intentos esperados frente a 3 iteraciones.
 7. Mostrar el circuito dibujado (oráculo + difusor repetidos).
 Plan B si falla la red: video grabado de la misma secuencia.
 

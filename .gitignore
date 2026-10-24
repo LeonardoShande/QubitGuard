@@ -1,5 +1,3 @@
-# .gitignore
-
 __pycache__/
 *.py[cod]
 *.pyo
@@ -15,3 +13,6 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+node_modules/
+# El JS compilado se versiona para que la demo arranque sin Node.
+!frontend/dist/

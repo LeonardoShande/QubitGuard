@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import copy
 import math
+import threading
 from functools import lru_cache
 from typing import Any
 
@@ -18,6 +20,11 @@ from qiskit_ibm_runtime.fake_provider import FakeFez
 MIN_GROVER_QUBITS = 2
 MAX_GROVER_QUBITS = 6
 MAX_SHOTS = 8192
+_NOISY_SIMULATOR_LIMIT = threading.BoundedSemaphore(2)
+
+
+class SimulatorBusy(RuntimeError):
+    pass
 
 
 def _validate_integer(name: str, value: int, minimum: int, maximum: int) -> int:
@@ -105,24 +112,29 @@ def capabilities() -> dict[str, Any]:
     }
 
 
-def run_grover(
-    n_qubits: int = 4,
-    marked_state: str = "0101",
-    shots: int = 1024,
-    seed: int | None = None,
-    iterations: int | None = None,
-    noisy: bool = False,
+def _run_grover(
+    n_qubits: int, marked_state: str, shots: int, seed: int | None,
+    iterations: int | None, noisy: bool,
 ) -> dict[str, Any]:
     _validate_integer("shots", shots, 1, MAX_SHOTS)
     _validate_seed(seed)
     if not isinstance(noisy, bool):
         raise ValueError("noisy must be a boolean")
     circuit, iterations = build_grover_circuit(n_qubits, marked_state, iterations)
-    simulator = _noisy_backend() if noisy else AerSimulator(seed_simulator=seed)
-    # Aer ejecuta mcx de forma nativa; la base cx/rz/sx/x hace que depth y two_qubit_gates sean comparables con FakeFez.
-    target = {"backend": simulator} if noisy else {"basis_gates": ["cx", "rz", "sx", "x"]}
-    compiled = transpile(circuit, **target, seed_transpiler=seed, optimization_level=3 if noisy else 1)
-    raw_counts = simulator.run(compiled, shots=shots, seed_simulator=seed).result().get_counts(compiled)
+    acquired = False
+    if noisy:
+        acquired = _NOISY_SIMULATOR_LIMIT.acquire(timeout=10)
+        if not acquired:
+            raise SimulatorBusy("Simulador ocupado, reintenta")
+    try:
+        simulator = _noisy_backend() if noisy else AerSimulator(seed_simulator=seed)
+        # Aer ejecuta mcx de forma nativa; la base cx/rz/sx/x hace que depth y two_qubit_gates sean comparables con FakeFez.
+        target = {"backend": simulator} if noisy else {"basis_gates": ["cx", "rz", "sx", "x"]}
+        compiled = transpile(circuit, **target, seed_transpiler=seed, optimization_level=3 if noisy else 1)
+        raw_counts = simulator.run(compiled, shots=shots, seed_simulator=seed).result().get_counts(compiled)
+    finally:
+        if acquired:
+            _NOISY_SIMULATOR_LIMIT.release()
     counts = {state: int(raw_counts[state]) for state in sorted(raw_counts)}
     return {
         "counts": counts,
@@ -141,7 +153,37 @@ def run_grover(
     }
 
 
-def grover_curve(n_qubits: int) -> dict[str, Any]:
+@lru_cache(maxsize=128)
+def _run_grover_cached(
+    n_qubits: int, marked_state: str, shots: int, seed: int, iterations: int | None, noisy: bool,
+) -> dict[str, Any]:
+    return _run_grover(n_qubits, marked_state, shots, seed, iterations, noisy)
+
+
+def run_grover(
+    n_qubits: int = 4,
+    marked_state: str = "0101",
+    shots: int = 1024,
+    seed: int | None = None,
+    iterations: int | None = None,
+    noisy: bool = False,
+) -> dict[str, Any]:
+    if seed is None:
+        return _run_grover(n_qubits, marked_state, shots, seed, iterations, noisy)
+    _validate_integer("shots", shots, 1, MAX_SHOTS)
+    _validate_seed(seed)
+    if not isinstance(noisy, bool):
+        raise ValueError("noisy must be a boolean")
+    optimal_iterations(n_qubits)
+    if not isinstance(marked_state, str) or len(marked_state) != n_qubits or any(bit not in "01" for bit in marked_state):
+        raise ValueError("marked_state must contain exactly n_qubits binary digits")
+    if iterations is not None:
+        _validate_integer("iterations", iterations, 0, 20)
+    return copy.deepcopy(_run_grover_cached(n_qubits, marked_state, shots, seed, iterations, noisy))
+
+
+@lru_cache(maxsize=32)
+def _grover_curve_cached(n_qubits: int) -> dict[str, Any]:
     optimum = optimal_iterations(n_qubits)
     iterations = list(range(2 * optimum + 1))
     marked_state = "1" * n_qubits
@@ -155,6 +197,11 @@ def grover_curve(n_qubits: int) -> dict[str, Any]:
         "iterations": iterations,
         "probability": probabilities,
     }
+
+
+def grover_curve(n_qubits: int) -> dict[str, Any]:
+    optimal_iterations(n_qubits)
+    return copy.deepcopy(_grover_curve_cached(n_qubits))
 
 
 def montecarlo(n_bits: int = 4, trials: int = 1000, seed: int | None = None) -> dict[str, Any]:
@@ -177,7 +224,8 @@ def montecarlo(n_bits: int = 4, trials: int = 1000, seed: int | None = None) -> 
     }
 
 
-def compare(max_bits: int = 40) -> dict[str, Any]:
+@lru_cache(maxsize=32)
+def _compare_cached(max_bits: int) -> dict[str, Any]:
     _validate_integer("max_bits", max_bits, 2, 256)
     bits_values = sorted(set(range(4, max_bits + 1, 4)) | {bits for bits in (128, 256) if bits <= max_bits})
     rows = []
@@ -194,3 +242,8 @@ def compare(max_bits: int = 40) -> dict[str, Any]:
             "speedup": classical_expected / max(grover_iterations, 1),
         })
     return {"rows": rows}
+
+
+def compare(max_bits: int = 40) -> dict[str, Any]:
+    _validate_integer("max_bits", max_bits, 2, 256)
+    return copy.deepcopy(_compare_cached(max_bits))

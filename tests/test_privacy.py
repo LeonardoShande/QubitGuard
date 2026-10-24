@@ -29,11 +29,17 @@ def test_post_endpoints_reject_password_field(client):
             assert response.status_code == 422, (path, response.status_code, response.text)
 
 
-def test_password_module_does_not_send_or_store_passwords():
+def test_password_generators_do_not_send_or_store_passwords():
     files = list((Path(__file__).resolve().parents[1] / "frontend" / "src").glob("*.ts"))
-    password_files = [path for path in files if "password" in path.name.lower()]
-    if not password_files:
-        pytest.skip("password module is not present yet")
-    forbidden = re.compile(r"fetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|localStorage|sessionStorage")
-    for path in password_files:
+    sensitive_files = [path for path in files if any(word in path.name.lower() for word in ("password", "generator", "wordlist"))]
+    if not sensitive_files:
+        pytest.skip("password and generator modules are not present yet")
+    forbidden = re.compile(r"fetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|localStorage|sessionStorage|indexedDB|console\.", re.IGNORECASE)
+    for path in sensitive_files:
         assert not forbidden.search(path.read_text(encoding="utf-8")), path
+
+
+def test_frontend_typescript_does_not_use_math_random():
+    files = list((Path(__file__).resolve().parents[1] / "frontend" / "src").glob("*.ts"))
+    for path in files:
+        assert not re.search(r"Math\s*\.\s*random", path.read_text(encoding="utf-8")), path

@@ -6,6 +6,8 @@ QubitGuard enseña **distribuciones de probabilidad y amplitudes** (una amplitud
 
 > **Estado honesto.** Todos los circuitos de la aplicación web se ejecutan en simuladores locales (Qiskit Aer, con el modelo de ruido `FakeFez` como opción). **No se ha ejecutado nada en hardware cuántico real de IBM**: existe un CLI listo para hacerlo ([sección 5](#5-ejecución-en-hardware-cuántico-de-ibm)) pero no hay un solo job enviado. Tampoco se ha hecho todavía un piloto con estudiantes: no afirmamos mejoras de aprendizaje ni retención. QubitGuard es una herramienta didáctica y no ejecuta ataques contra sistemas reales.
 
+El laboratorio se integró en `main` mediante el [PR #1](https://github.com/LeonardoShande/QubitGuard/pull/1). La [guía del código](docs/GUIA_DEL_CODIGO.md) explica sus módulos, y la [revisión frente al prompt y las bases](docs/REVISION_PROMPT_Y_BASES.md) compara lo implementado con el encargo y prioriza mejoras en general.
+
 ## Para el jurado en 3 minutos
 
 ```bash
